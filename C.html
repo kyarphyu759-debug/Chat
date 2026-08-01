@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatSphere - Persistent Session Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Screen Management */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Login Screen */
+    .card {
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .card h2 {
+      margin-bottom: 0.5rem;
+      color: #38bdf8;
+    }
+
+    .card p {
+      color: #94a3b8;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #38bdf8;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    /* Main Chat App Layout */
+    #chat-app {
+      display: flex;
+      width: 90vw;
+      height: 85vh;
+      max-width: 1100px;
+      background: #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: #0f172a;
+      padding: 1.5rem;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .room-info {
+      background: #1e293b;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .room-info h4 {
+      color: #94a3b8;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .room-info p {
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-top: 0.25rem;
+      word-break: break-all;
+    }
+
+    .users-list h3 {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    /* Logout Button Styling */
+    .logout-btn {
+      background: #ef4444;
+      margin-top: 1rem;
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
+    }
+
+    /* Chat Area */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .chat-header {
+      padding: 1rem 1.5rem;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .messages-container {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .message {
+      max-width: 65%;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      background: #334155;
+      align-self: flex-start;
+      word-wrap: break-word;
+    }
+
+    .message.mine {
+      background: #2563eb;
+      align-self: flex-end;
+    }
+
+    .msg-meta {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      margin-bottom: 0.25rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .msg-time {
+      opacity: 0.7;
+    }
+
+    .typing-indicator {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-style: italic;
+      height: 20px;
+      padding: 0 1.5rem;
+    }
+
+    /* Input Area */
+    .input-area {
+      padding: 1rem 1.5rem;
+      background: #0f172a;
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-area input {
+      margin-bottom: 0;
+    }
+
+    .input-area button {
+      width: auto;
+      padding: 0 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STEP 1: LOGIN & ROOM CREATION -->
+  <div id="login-screen" class="card">
+    <h2>ChatSphere</h2>
+    <p>Real-time Communication App</p>
+    <input type="text" id="username-input" placeholder="သင့်အမည် ရိုက်ထည့်ပါ..." required />
+    <input type="text" id="room-input" placeholder="Room ID ရိုက်ထည့်ပါ (eg. gaming-123)..." required />
+    <button id="join-btn">Chat Room သို့ ဝင်မည်</button>
+  </div>
+
+  <!-- STEP 2: MAIN CHAT DASHBOARD -->
+  <div id="chat-app" class="hidden">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div>
+        <div class="room-info">
+          <h4>Current Room</h4>
+          <p id="display-room-id">#-</p>
+        </div>
+        <div class="users-list">
+          <h3>ONLINE USERS</h3>
+          <div id="users-container"></div>
+        </div>
+      </div>
+      <!-- Logout Button Added -->
+      <button id="logout-btn" class="logout-btn">Logout (ထွက်မည်)</button>
+    </div>
+
+    <!-- Main Chat Container -->
+    <div class="chat-area">
+      <div class="chat-header">
+        <h3 id="display-username">User</h3>
+        <span style="font-size:0.8rem; color: #22c55e;">● Live Connected</span>
+      </div>
+
+      <!-- Messages Stream -->
+      <div class="messages-container" id="messages-container"></div>
+
+      <!-- Typing Indicator Bar -->
+      <div class="typing-indicator" id="typing-indicator"></div>
+
+      <!-- Input Message Box -->
+      <form class="input-area" id="chat-form">
+        <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FIREBASE SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+    // 1. YOUR FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbrOZ_ro3YrBxpnHb3icXUxzuLTqtYCZo", 
+      authDomain: "chat-20ea2.firebaseapp.com",
+      databaseURL: "https://chat-20ea2-default-rtdb.firebaseio.com",
+      projectId: "chat-20ea2",
+      storageBucket: "chat-20ea2.appspot.com",
+      messagingSenderId: "237395870913",
+      appId: "1:237395870913:web:ea718b60cef5a5354e4040",
+      measurementId: "G-TR1DR12NSV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // Session Persistence ကို LOCAL အဖြစ် သတ်မှတ်ခြင်း (Browser ပိတ်လိုက်သော်လည်း Session မပျောက်ပါ)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // App State Variables
+    let currentUser = null;
+    let currentRoomId = null;
+    let typingTimeout = null;
+
+    // DOM Elements
+    const loginScreen = document.getElementById('login-screen');
+    const chatApp = document.getElementById('chat-app');
+    const usernameInput = document.getElementById('username-input');
+    const roomInput = document.getElementById('room-input');
+    const joinBtn = document.getElementById('join-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    const displayRoomId = document.getElementById('display-room-id');
+    const displayUsername = document.getElementById('display-username');
+    const usersContainer = document.getElementById('users-container');
+    const messagesContainer = document.getElementById('messages-container');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    // 2. AUTO-LOGIN / PERSISTENT SESSION MONITORING
+    auth.onAuthStateChanged((user) => {
+      const savedUsername = localStorage.getItem('chatsphere_username');
+      const savedRoomId = localStorage.getItem('chatsphere_room');
+
+      if (user && savedUsername && savedRoomId) {
+        // အရင်က Login ဝင်ထားခဲ့ပါက အလိုအလျောက် Chat Screen သို့ ပို့ပေးမည်
+        currentUser = {
+          uid: user.uid,
+          name: savedUsername
+        };
+        currentRoomId = savedRoomId;
+
+        loginScreen.classList.add('hidden');
+        chatApp.classList.remove('hidden');
+        displayRoomId.textContent = `#${currentRoomId}`;
+        displayUsername.textContent = currentUser.name;
+
+        initRoomSystem();
+      } else {
+        // Logout ထွက်ထားပါက သို့မဟုတ် မဝင်ရသေးပါက Login Screen ပြမည်
+        loginScreen.classList.remove('hidden');
+        chatApp.classList.add('hidden');
+      }
+    });
+
+    // 3. JOIN ROOM / LOGIN LOGIC
+    joinBtn.addEventListener('click', async () => {
+      const username = usernameInput.value.trim();
+      const roomId = roomInput.value.trim().toLowerCase().replace(/\s+/g, '-');
+
+      if (!username || !roomId) {
+        alert("အမည် နှင့် Room ID ဖြည့်စွက်ပေးပါ။");
+        return;
+      }
+
+      try {
+        // LocalStorage တွင် သိမ်းဆည်းခြင်း
+        localStorage.setItem('chatsphere_username', username);
+        localStorage.setItem('chatsphere_room', roomId);
+
+        // Firebase Anonymous Login
+        if (!auth.currentUser) {
+          await auth.signInAnonymously();
+        } else {
+          // တကယ်လို့ Auth ရှိပြီးသားဆိုရင် Trigger လုပ်ပေးရန်
+          auth.onAuthStateChanged();
+        }
+
+      } catch (error) {
+        console.error("Auth Error:", error);
+        alert("ဝင်ရောက်ရာတွင် အမှားအယွင်းရှိနေပါသည်။");
+      }
+    });
+
+    // 4. LOGOUT LOGIC
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm("အကောင့်မှ ထွက်မှာ သေချာပါသလား?")) {
+        try {
+          // Realtime Database မှ User Status ဖျက်ခြင်း
+          if (currentUser && currentRoomId) {
+            await db.ref(`rooms/${currentRoomId}/users/${currentUser.uid}`).remove();
+          }
+
+          // LocalStorage သန့်ရှင်းရေးလုပ်ခြင်း
+          localStorage.removeItem('chatsphere_username');
+          localStorage.removeItem('chatsphere_room');
+
+          // Firebase SignOut လုပ်ခြင်း
+          await auth.signOut();
+
+          // Form Input များကို ရှင်းလင်းခြင်း
+          usernameInput.value = '';
+          roomInput.value = '';
+          messagesContainer.innerHTML = '';
+
+        } catch (error) {
+          console.error("Logout Error:", error);
+        }
+      }
+    });
+
+    // 5. REAL-TIME DATA SYNCING LOGIC
+    function initRoomSystem() {
+      const roomRef = db.ref(`rooms/${currentRoomId}`);
+
+      // Online Status သတ်မှတ်ခြင်း
+      const userPresenceRef = roomRef.child(`users/${currentUser.uid}`);
+      userPresenceRef.set({ name: currentUser.name, online: true });
+      userPresenceRef.onDisconnect().remove();
+
+      // Online Users စောင့်ကြည့်ခြင်း
+      roomRef.child('users').on('value', (snapshot) => {
+        usersContainer.innerHTML = '';
+        const users = snapshot.val() || {};
+        Object.values(users).forEach(user => {
+          const userEl = document.createElement('div');
+          userEl.className = 'user-item';
+          userEl.innerHTML = `<div class="status-dot"></div><span>${user.name}</span>`;
+          usersContainer.appendChild(userEl);
+        });
+      });
+
+      // Messages Syncing (အဟောင်းနှင့် စာအသစ်များကို နားထောင်ခြင်း)
+      messagesContainer.innerHTML = ''; // အဟောင်းများကို ရှင်းထုတ်မည်
+      roomRef.child('messages').off(); // Listener အဟောင်းကို ပိတ်မည်
+      roomRef.child('messages').on('child_added', (snapshot) => {
+        const msg = snapshot.val();
+        renderMessage(msg);
+      });
+
+      // Typing Indicator
+      roomRef.child('typing').on('value', (snapshot) => {
+        const typers = snapshot.val() || {};
+        const activeTypers = Object.keys(typers)
+          .filter(uid => uid !== currentUser.uid && typers[uid] === true);
+
+        if (activeTypers.length > 0) {
+          typingIndicator.textContent = `တစ်ယောက်ယောက် စာရိုက်နေပါသည်။...`;
+        } else {
+          typingIndicator.textContent = '';
+        }
+      });
+    }
+
+    // 6. MESSAGE RENDERING & UX
+    function renderMessage(msg) {
+      const isMine = msg.uid === currentUser.uid;
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${isMine ? 'mine' : ''}`;
+
+      const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      msgDiv.innerHTML = `
+        <div class="msg-meta">
+          <strong>${isMine ? 'You' : msg.sender}</strong>
+          <span class="msg-time">${timeStr}</span>
+        </div>
+        <div class="msg-text">${escapeHTML(msg.text)}</div>
+      `;
+
+      messagesContainer.appendChild(msgDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // 7. SEND MESSAGE & TYPING HANDLERS
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      const messageData = {
+        uid: currentUser.uid,
+        sender: currentUser.name,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      db.ref(`rooms/${currentRoomId}/messages`).push(messageData);
+      db.ref(`rooms/${currentRoomId}/typing/${currentUser.uid}`).remove();
+      messageInput.value = '';
+    });
+
+    messageInput.addEventListener('input', () => {
+      const typingRef = db.ref(`rooms/${currentRoomId}/typing/${currentUser.uid}`);
+      typingRef.set(true);
+
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        typingRef.remove();
+      }, 2000);
+    });
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+  </script>
+</body>
+</html>
