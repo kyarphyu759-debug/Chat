@@ -58,7 +58,7 @@
       <div>
         <div class="room-info">
           <h4>Current Room</h4>
-          <p id="display-room-id">#gaming-123</p>
+          <p id="display-room-id">#mya-123</p>
         </div>
         <div class="users-list">
           <h3>ONLINE USERS (<span id="user-count">0</span>)</h3>
@@ -96,7 +96,7 @@
       <label>Password</label>
       <input type="password" id="modal-password-input" placeholder="Password အသစ်..." required />
       <label>Room ID</label>
-      <input type="text" id="modal-room-input" placeholder="Room ID (eg. gaming-123)..." required />
+      <input type="text" id="modal-room-input" placeholder="Room ID (eg. mya-123)..." required />
       <div class="modal-actions">
         <button type="button" id="save-profile-btn" style="flex: 1;">Save Updates</button>
         <button type="button" id="close-modal-btn" class="cancel-btn">Cancel</button>
@@ -125,14 +125,14 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Unique Browser Client ID Generator (Tab တိုင်းမှာ User မတူအောင် ခွဲခြားရန်)
-    let myClientId = localStorage.getItem('chatsphere_client_id');
+    // Session Unique Client ID Generator
+    let myClientId = sessionStorage.getItem('chatsphere_client_id');
     if (!myClientId) {
-      myClientId = 'user-' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('chatsphere_client_id', myClientId);
+      myClientId = 'usr_' + Math.random().toString(36).substr(2, 9);
+      sessionStorage.setItem('chatsphere_client_id', myClientId);
     }
 
-    let currentRoomId = localStorage.getItem('chatsphere_room') || 'gaming-123';
+    let currentRoomId = localStorage.getItem('chatsphere_room') || 'mya-123';
     let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
     let currentPassword = localStorage.getItem('chatsphere_password') || '';
     let typingTimeout = null;
@@ -169,7 +169,7 @@
       }
     });
 
-    // Profile Controls
+    // Profile Modal
     openProfileBtn.addEventListener('click', () => {
       modalUsernameInput.value = currentUsername;
       modalPasswordInput.value = currentPassword;
@@ -191,7 +191,7 @@
         return;
       }
 
-      // Old presence clean
+      // Old Room User Presence Cleanup
       if (currentRoomId) {
         db.ref(`rooms/${currentRoomId}/users/${myClientId}`).remove();
       }
@@ -211,22 +211,20 @@
       profileModal.classList.add('hidden');
     });
 
-    // REAL-TIME PRESENCE & MESSAGES
+    // REALTIME ROOM SYSTEM
     function initRoomSystem() {
       const roomRef = db.ref(`rooms/${currentRoomId}`);
+      const userRef = roomRef.child(`users/${myClientId}`);
 
-      // 1. Presence System Setup
-      const myPresenceRef = roomRef.child(`users/${myClientId}`);
-      
-      // Connection State Listener
-      db.ref('.info/connected').on('value', (snap) => {
-        if (snap.val() === true) {
-          myPresenceRef.onDisconnect().remove();
-          myPresenceRef.set({ name: currentUsername, online: true });
-        }
+      // 1. Direct Presence Registration
+      userRef.set({
+        name: currentUsername,
+        online: true,
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
       });
+      userRef.onDisconnect().remove();
 
-      // 2. Active Online Users Listener
+      // 2. Realtime Online Users Listener
       roomRef.child('users').off();
       roomRef.child('users').on('value', (snapshot) => {
         usersContainer.innerHTML = '';
@@ -243,7 +241,7 @@
         });
       });
 
-      // 3. Messages Sync
+      // 3. Realtime Messages Listener
       messagesContainer.innerHTML = '';
       roomRef.child('messages').off();
       roomRef.child('messages').on('child_added', (snapshot) => {
@@ -301,7 +299,7 @@
       messageInput.value = '';
     });
 
-    // Typing Event
+    // Typing Event Handler
     messageInput.addEventListener('input', () => {
       const typingRef = db.ref(`rooms/${currentRoomId}/typing/${myClientId}`);
       typingRef.set(true);
