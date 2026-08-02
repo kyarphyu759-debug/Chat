@@ -6,78 +6,107 @@
   <title>ChatSphere - Real-time Direct Messenger</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
     .hidden { display: none !important; }
 
-    #chat-app { display: flex; width: 90vw; height: 85vh; max-width: 1100px; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .sidebar { width: 300px; background: #0f172a; padding: 1.5rem; border-right: 1px solid #334155; display: flex; flex-direction: column; }
+    #chat-app { display: flex; width: 100vw; height: 100vh; max-width: 1100px; background: #1e293b; overflow: hidden; position: relative; }
+
+    @media (min-width: 768px) {
+      #chat-app { height: 85vh; width: 90vw; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    }
+
+    /* Sidebar */
+    .sidebar { width: 100%; background: #0f172a; padding: 1rem; border-right: 1px solid #334155; display: flex; flex-direction: column; z-index: 2; height: 100%; }
+    @media (min-width: 768px) {
+      .sidebar { width: 320px; }
+    }
     
-    .my-profile-info { background: #1e293b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-    .my-profile-info h4 { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
-    .my-profile-info p { color: #38bdf8; font-weight: bold; font-size: 1.1rem; }
+    .my-profile-info { background: #1e293b; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+    .my-profile-info h4 { color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .my-profile-info p { color: #38bdf8; font-weight: bold; font-size: 1rem; }
 
     .users-list { flex: 1; overflow-y: auto; }
-    .users-list h3 { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.75rem; }
+    .users-list h3 { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
     
-    .user-item { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; font-size: 0.95rem; background: #1e293b; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+    .user-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; background: #1e293b; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
     .user-item:hover { background: #334155; }
-    .user-item.active { background: #2563eb; border-color: #38bdf8; }
-    .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; flex-shrink: 0; }
-
-    .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
-    .chat-header { padding: 1rem 1.5rem; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-    .target-user-bar { display: flex; align-items: center; gap: 10px; }
-
-    .messages-container { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .user-item.active { background: #1e3a8a; border-color: #38bdf8; }
     
-    /* စာပြောင်းပြန်ဖြစ်မှု ကာကွယ်ရန် Message Box Styling */
+    .user-info-group { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
+    .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
+
+    .user-actions { display: flex; gap: 4px; align-shrink: 0; }
+    .action-btn { background: #334155; border: none; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+    .action-btn.block-btn:hover { background: #eab308; color: #000; }
+    .action-btn.delete-btn:hover { background: #ef4444; color: #fff; }
+
+    /* Chat Area */
+    .chat-area { flex: 1; display: flex; flex-direction: column; position: absolute; top:0; left:0; width:100%; height:100%; background: #1e293b; z-index: 1; transition: transform 0.3s ease; }
+    
+    @media (min-width: 768px) {
+      .chat-area { position: relative; width: auto; z-index: 1; }
+    }
+
+    .chat-area.active-mobile { z-index: 3; }
+
+    .chat-header { padding: 0.8rem 1rem; background: #0f172a; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; }
+    .back-btn { background: none; border: none; color: #38bdf8; font-size: 1.2rem; cursor: pointer; display: block; padding: 0 5px; }
+    @media (min-width: 768px) { .back-btn { display: none; } }
+
+    .target-title { font-size: 0.95rem; font-weight: bold; color: #f8fafc; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .messages-container { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; background: #1e293b; }
+    
     .message { 
-      max-width: 65%; 
-      padding: 0.75rem 1rem; 
+      max-width: 80%; 
+      padding: 0.6rem 0.9rem; 
       border-radius: 12px; 
       background: #334155; 
       align-self: flex-start; 
       word-wrap: break-word; 
       direction: ltr !important; 
       text-align: left !important;
+      font-size: 0.9rem;
     }
+    @media (min-width: 768px) { .message { max-width: 65%; } }
     .message.mine { background: #2563eb; align-self: flex-end; }
     
-    .msg-meta { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
-    .msg-time { opacity: 0.7; }
+    .msg-meta { font-size: 0.7rem; color: #cbd5e1; margin-bottom: 0.2rem; display: flex; justify-content: space-between; gap: 0.8rem; }
+    .msg-time { opacity: 0.75; }
     
     .msg-text {
       direction: ltr !important;
       unicode-bidi: isolate !important;
       text-align: left !important;
       white-space: pre-wrap;
+      line-height: 1.3;
     }
 
-    .typing-indicator { font-size: 0.85rem; color: #94a3b8; font-style: italic; height: 20px; padding: 0 1.5rem; }
-    .input-area { padding: 1rem 1.5rem; background: #0f172a; display: flex; gap: 10px; }
-    input { width: 100%; padding: 0.75rem; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #fff; font-size: 1rem; outline: none; }
+    .input-area { padding: 0.75rem 1rem; background: #0f172a; display: flex; gap: 8px; border-top: 1px solid #334155; }
+    input { flex: 1; padding: 0.65rem 0.8rem; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #fff; font-size: 0.9rem; outline: none; }
     input:focus { border-color: #38bdf8; }
-    button { padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #1d4ed8; }
+    button.send-btn { padding: 0.65rem 1.2rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    
     .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
 
-    .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 1.1rem; }
+    .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
 
     /* Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-card { background: #1e293b; padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; }
-    .modal-card h3 { color: #38bdf8; margin-bottom: 1rem; }
-    .modal-card label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; }
-    .modal-card input { margin-bottom: 1rem; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 0.5rem; }
-    .cancel-btn { background: #475569; }
+    .modal-card { background: #1e293b; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 380px; }
+    .modal-card h3 { color: #38bdf8; margin-bottom: 0.8rem; font-size: 1.1rem; }
+    .modal-card label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
+    .modal-card input { margin-bottom: 1rem; width: 100%; }
+    .modal-actions { display: flex; gap: 8px; }
+    .cancel-btn { background: #475569; border: none; color: white; padding: 0.6rem; border-radius: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
 
   <div id="chat-app">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="my-profile-info">
         <div>
           <h4>MY PROFILE</h4>
@@ -87,29 +116,29 @@
       </div>
       
       <div class="users-list">
-        <h3>GLOBAL ONLINE USERS (<span id="user-count">0</span>)</h3>
+        <h3>
+          <span>GLOBAL ONLINE USERS</span>
+          <span id="user-count" style="color:#38bdf8;">0</span>
+        </h3>
         <div id="users-container"></div>
       </div>
     </div>
 
     <!-- Chat Area -->
-    <div class="chat-area">
+    <div class="chat-area" id="chat-area">
       <div class="chat-header">
-        <div class="target-user-bar">
-          <h3 id="target-username">ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ</h3>
-        </div>
-        <span style="font-size:0.8rem; color: #22c55e;">● Live</span>
+        <button class="back-btn" id="back-to-users-btn">⬅️</button>
+        <div class="target-title" id="target-username">ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ</div>
+        <span style="font-size:0.75rem; color: #22c55e; white-space: nowrap;">● Live</span>
       </div>
 
       <div class="messages-container" id="messages-container">
         <div class="no-chat-selected" id="no-chat-msg">👈 ဘေးဘက် Online Users စာရင်းမှ ပို့ချင်သောသူကို နှိပ်ပါ။</div>
       </div>
-      
-      <div class="typing-indicator" id="typing-indicator"></div>
 
       <form class="input-area hidden" id="chat-form">
         <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
-        <button type="submit">Send</button>
+        <button type="submit" class="send-btn">Send</button>
       </form>
     </div>
   </div>
@@ -121,7 +150,7 @@
       <label>User Name</label>
       <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required />
       <div class="modal-actions">
-        <button type="button" id="save-profile-btn" style="flex: 1;">Save Changes</button>
+        <button type="button" id="save-profile-btn" style="flex: 1; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Save Changes</button>
         <button type="button" id="close-modal-btn" class="cancel-btn">Cancel</button>
       </div>
     </div>
@@ -158,6 +187,10 @@
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
+    // Blocked & Hidden User State Storage
+    let blockedUserIds = JSON.parse(localStorage.getItem('chatsphere_blocked_users') || '[]');
+    let hiddenUserIds = JSON.parse(localStorage.getItem('chatsphere_hidden_users') || '[]');
+
     // DOM Elements
     const displayMyUsername = document.getElementById('display-my-username');
     const usersContainer = document.getElementById('users-container');
@@ -167,6 +200,8 @@
     const noChatMsg = document.getElementById('no-chat-msg');
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
+    const chatArea = document.getElementById('chat-area');
+    const backToUsersBtn = document.getElementById('back-to-users-btn');
 
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
@@ -187,6 +222,11 @@
       }
     });
 
+    // MOBILE BACK BUTTON
+    backToUsersBtn.addEventListener('click', () => {
+      chatArea.classList.remove('active-mobile');
+    });
+
     // GLOBAL ONLINE PRESENCE SYSTEM
     function initGlobalPresence() {
       const globalPresenceRef = db.ref(`global_online_users/${myClientId}`);
@@ -203,39 +243,108 @@
         const usersObj = snapshot.val() || {};
         const usersList = Object.values(usersObj);
         
-        userCountEl.textContent = usersList.length;
+        let visibleCount = 0;
 
         usersList.forEach(user => {
           if (user.id === myClientId) return; 
+          if (hiddenUserIds.includes(user.id)) return; // Filter Deleted Users
+
+          visibleCount++;
+
+          const isBlocked = blockedUserIds.includes(user.id);
 
           const userEl = document.createElement('div');
           userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
           
           userEl.innerHTML = `
-            <div class="status-dot"></div>
-            <span>${escapeHTML(user.name)}</span>
+            <div class="user-info-group">
+              <div class="status-dot" style="${isBlocked ? 'background:#ef4444; box-shadow:none;' : ''}"></div>
+              <span class="user-name">${escapeHTML(user.name)} ${isBlocked ? '<small style="color:#ef4444;">(Blocked)</small>' : ''}</span>
+            </div>
+            <div class="user-actions">
+              <button class="action-btn block-btn" title="${isBlocked ? 'Unblock' : 'Block'}">${isBlocked ? '🔓' : '🚫'}</button>
+              <button class="action-btn delete-btn" title="Delete User">🗑️</button>
+            </div>
           `;
           
-          userEl.addEventListener('click', () => {
+          // Select User Click
+          userEl.addEventListener('click', (e) => {
+            if (e.target.classList.contains('action-btn')) return; // Ignore button clicks
+            if (isBlocked) {
+              alert("ဒီ User ကို Block ထားပါသည်! စာပို့ရန် Unblock ပြန်လုပ်ပါ။");
+              return;
+            }
             selectUserToChat(user);
+          });
+
+          // Block Button Click
+          const blockBtn = userEl.querySelector('.block-btn');
+          blockBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleBlockUser(user.id);
+          });
+
+          // Delete Button Click
+          const deleteBtn = userEl.querySelector('.delete-btn');
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteUserFromList(user.id);
           });
 
           usersContainer.appendChild(userEl);
         });
+
+        userCountEl.textContent = visibleCount;
       });
+    }
+
+    // BLOCK / UNBLOCK LOGIC
+    function toggleBlockUser(userId) {
+      if (blockedUserIds.includes(userId)) {
+        blockedUserIds = blockedUserIds.filter(id => id !== userId);
+      } else {
+        blockedUserIds.push(userId);
+        if (selectedTargetUser && selectedTargetUser.id === userId) {
+          chatArea.classList.remove('active-mobile');
+        }
+      }
+      localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUserIds));
+      initGlobalPresence();
+    }
+
+    // DELETE LOGIC
+    function deleteUserFromList(userId) {
+      if (confirm("ဤ User ကို သင့် စာရင်းမှ ဖျက်ပစ်ရန် သေချာပါသလား?")) {
+        hiddenUserIds.push(userId);
+        localStorage.setItem('chatsphere_hidden_users', JSON.stringify(hiddenUserIds));
+        
+        if (selectedTargetUser && selectedTargetUser.id === userId) {
+          selectedTargetUser = null;
+          activeChatRoomId = null;
+          targetUsernameEl.textContent = 'ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ';
+          noChatMsg.classList.remove('hidden');
+          chatForm.classList.add('hidden');
+          messagesContainer.innerHTML = '';
+          messagesContainer.appendChild(noChatMsg);
+          chatArea.classList.remove('active-mobile');
+        }
+        initGlobalPresence();
+      }
     }
 
     // SELECT USER TO CHAT
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
       
-      // Header တွင် ID မပါဘဲ နာမည်တစ်ခုတည်းပြရန်
       targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
       
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
       noChatMsg.classList.add('hidden');
       chatForm.classList.remove('hidden');
+
+      // Mobile View Slide Effect
+      chatArea.classList.add('active-mobile');
 
       document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
       
@@ -260,7 +369,6 @@
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // dir="ltr" ဖြင့် စာသားများ ဘယ်မှညာ ပုံမှန်အတိုင်းပေါ်စေခြင်း
       msgDiv.innerHTML = `
         <div class="msg-meta">
           <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
