@@ -29,7 +29,19 @@
     .target-user-bar { display: flex; align-items: center; gap: 10px; }
 
     .messages-container { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
-    .message { max-width: 65%; padding: 0.75rem 1rem; border-radius: 12px; background: #334155; align-self: flex-start; word-wrap: break-word; unicode-bidi: plaintext; text-align: left; }
+    
+    /* စာပြောင်းပြန်မဖြစ်အောင် ပြင်ဆင်ထားသော Message Style */
+    .message { 
+      max-width: 65%; 
+      padding: 0.75rem 1rem; 
+      border-radius: 12px; 
+      background: #334155; 
+      align-self: flex-start; 
+      word-wrap: break-word; 
+      direction: ltr !important; 
+      text-align: left !important;
+      unicode-bidi: isolate !important;
+    }
     .message.mine { background: #2563eb; align-self: flex-end; }
     .msg-meta { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
     .msg-time { opacity: 0.7; }
@@ -136,7 +148,7 @@
     }
 
     let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
-    let selectedTargetUser = null;
+    let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
     // DOM Elements
@@ -209,8 +221,9 @@
     // SELECT USER TO CHAT
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
-      // ID မပါဘဲ နာမည်ပဲ ပြသရန် ပြင်ဆင်ထားပါသည်
-      targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
+      
+      // ID ကို ဖျောက်ပြီး နာမည်တစ်ခုတည်းသာ ပြသရန်
+      targetUsernameEl.textContent = `${targetUser.name} နှင့် စာပို့နေပါသည်`;
       
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
@@ -240,15 +253,12 @@
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // ပြောင်းပြန် ဖြစ်နေသော စာတိုများ ပုံမှန် ပေါ်စေရန်
-      let textContent = msg.text || '';
-
       msgDiv.innerHTML = `
         <div class="msg-meta">
           <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
           <span class="msg-time">${timeStr}</span>
         </div>
-        <div class="msg-text">${escapeHTML(textContent)}</div>
+        <div class="msg-text">${escapeHTML(msg.text)}</div>
       `;
 
       messagesContainer.appendChild(msgDiv);
