@@ -3,28 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatSphere - Real-time Web Messenger</title>
+  <title>ChatSphere - Real-time Direct Messenger</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; }
     .hidden { display: none !important; }
 
     #chat-app { display: flex; width: 90vw; height: 85vh; max-width: 1100px; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .sidebar { width: 280px; background: #0f172a; padding: 1.5rem; border-right: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; }
+    .sidebar { width: 300px; background: #0f172a; padding: 1.5rem; border-right: 1px solid #334155; display: flex; flex-direction: column; }
     
-    .room-info { background: #1e293b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
-    .room-info h4 { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-    .room-info p { color: #38bdf8; font-weight: bold; font-size: 1.1rem; margin-top: 0.25rem; word-break: break-all; }
+    .my-profile-info { background: #1e293b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .my-profile-info h4 { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+    .my-profile-info p { color: #38bdf8; font-weight: bold; font-size: 1.1rem; }
 
-    .users-list h3 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.75rem; }
-    .user-item { display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem; font-size: 0.95rem; background: #1e293b; padding: 6px 10px; border-radius: 6px; }
-    .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+    .users-list { flex: 1; overflow-y: auto; }
+    .users-list h3 { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.75rem; }
+    
+    .user-item { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; font-size: 0.95rem; background: #1e293b; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+    .user-item:hover { background: #334155; }
+    .user-item.active { background: #2563eb; border-color: #38bdf8; }
+    .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; flex-shrink: 0; }
 
     .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
     .chat-header { padding: 1rem 1.5rem; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-    .user-profile-bar { display: flex; align-items: center; gap: 12px; }
-    .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
-    .edit-profile-btn:hover { background: #38bdf8; color: #0f172a; }
+    .target-user-bar { display: flex; align-items: center; gap: 10px; }
 
     .messages-container { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
     .message { max-width: 65%; padding: 0.75rem 1rem; border-radius: 12px; background: #334155; align-self: flex-start; word-wrap: break-word; }
@@ -38,16 +40,18 @@
     input:focus { border-color: #38bdf8; }
     button { padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
     button:hover { background: #1d4ed8; }
+    .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+
+    .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 1.1rem; }
 
     /* Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-card { background: #1e293b; padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-card { background: #1e293b; padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; }
     .modal-card h3 { color: #38bdf8; margin-bottom: 1rem; }
-    .modal-card label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; text-align: left; }
+    .modal-card label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; }
     .modal-card input { margin-bottom: 1rem; }
     .modal-actions { display: flex; gap: 10px; margin-top: 0.5rem; }
     .cancel-btn { background: #475569; }
-    .cancel-btn:hover { background: #334155; }
   </style>
 </head>
 <body>
@@ -55,32 +59,36 @@
   <div id="chat-app">
     <!-- Sidebar -->
     <div class="sidebar">
-      <div>
-        <div class="room-info">
-          <h4>Current Room</h4>
-          <p id="display-room-id">#mya-123</p>
+      <div class="my-profile-info">
+        <div>
+          <h4>MY PROFILE</h4>
+          <p id="display-my-username">Guest</p>
         </div>
-        <div class="users-list">
-          <h3>ONLINE USERS (<span id="user-count">0</span>)</h3>
-          <div id="users-container"></div>
-        </div>
+        <button id="open-profile-btn" class="edit-profile-btn">⚙️ Edit</button>
+      </div>
+      
+      <div class="users-list">
+        <h3>GLOBAL ONLINE USERS (<span id="user-count">0</span>)</h3>
+        <div id="users-container"></div>
       </div>
     </div>
 
     <!-- Chat Area -->
     <div class="chat-area">
       <div class="chat-header">
-        <div class="user-profile-bar">
-          <h3 id="display-username">Guest</h3>
-          <button id="open-profile-btn" class="edit-profile-btn">⚙️ Edit Profile</button>
+        <div class="target-user-bar">
+          <h3 id="target-username">ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ</h3>
         </div>
-        <span style="font-size:0.8rem; color: #22c55e;">● Live Connected</span>
+        <span style="font-size:0.8rem; color: #22c55e;">● Live</span>
       </div>
 
-      <div class="messages-container" id="messages-container"></div>
+      <div class="messages-container" id="messages-container">
+        <div class="no-chat-selected" id="no-chat-msg">👈 ဘေးဘက် Online Users စာရင်းမှ ပို့ချင်သောသူကို နှိပ်ပါ။</div>
+      </div>
+      
       <div class="typing-indicator" id="typing-indicator"></div>
 
-      <form class="input-area" id="chat-form">
+      <form class="input-area hidden" id="chat-form">
         <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
         <button type="submit">Send</button>
       </form>
@@ -90,15 +98,11 @@
   <!-- Profile Modal -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3>အကောင့် အချက်အလက် ပြောင်းရန်</h3>
+      <h3>User Name ပြောင်းလဲရန်</h3>
       <label>User Name</label>
       <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required />
-      <label>Password</label>
-      <input type="password" id="modal-password-input" placeholder="Password အသစ်..." required />
-      <label>Room ID</label>
-      <input type="text" id="modal-room-input" placeholder="Room ID (eg. mya-123)..." required />
       <div class="modal-actions">
-        <button type="button" id="save-profile-btn" style="flex: 1;">Save Updates</button>
+        <button type="button" id="save-profile-btn" style="flex: 1;">Save Changes</button>
         <button type="button" id="close-modal-btn" class="cancel-btn">Cancel</button>
       </div>
     </div>
@@ -132,138 +136,106 @@
       sessionStorage.setItem('chatsphere_client_id', myClientId);
     }
 
-    let currentRoomId = localStorage.getItem('chatsphere_room') || 'mya-123';
     let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
-    let currentPassword = localStorage.getItem('chatsphere_password') || '';
-    let typingTimeout = null;
+    let selectedTargetUser = null; // { id, name }
+    let activeChatRoomId = null;
 
     // DOM Elements
-    const displayRoomId = document.getElementById('display-room-id');
-    const displayUsername = document.getElementById('display-username');
+    const displayMyUsername = document.getElementById('display-my-username');
     const usersContainer = document.getElementById('users-container');
     const userCountEl = document.getElementById('user-count');
+    const targetUsernameEl = document.getElementById('target-username');
     const messagesContainer = document.getElementById('messages-container');
+    const noChatMsg = document.getElementById('no-chat-msg');
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
-    const typingIndicator = document.getElementById('typing-indicator');
 
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const modalUsernameInput = document.getElementById('modal-username-input');
-    const modalPasswordInput = document.getElementById('modal-password-input');
-    const modalRoomInput = document.getElementById('modal-room-input');
 
-    // AUTO START
+    // STARTUP
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         if (!auth.currentUser) {
           await auth.signInAnonymously();
         }
-        displayRoomId.textContent = `#${currentRoomId}`;
-        displayUsername.textContent = currentUsername;
-        initRoomSystem();
+        displayMyUsername.textContent = currentUsername;
+        initGlobalPresence();
       } catch (error) {
         console.error("Auth Error:", error);
       }
     });
 
-    // Profile Modal
-    openProfileBtn.addEventListener('click', () => {
-      modalUsernameInput.value = currentUsername;
-      modalPasswordInput.value = currentPassword;
-      modalRoomInput.value = currentRoomId;
-      profileModal.classList.remove('hidden');
-    });
+    // GLOBAL ONLINE PRESENCE SYSTEM
+    function initGlobalPresence() {
+      const globalPresenceRef = db.ref(`global_online_users/${myClientId}`);
 
-    closeModalBtn.addEventListener('click', () => {
-      profileModal.classList.add('hidden');
-    });
-
-    saveProfileBtn.addEventListener('click', () => {
-      const newUsername = modalUsernameInput.value.trim();
-      const newPassword = modalPasswordInput.value.trim();
-      const newRoom = modalRoomInput.value.trim().toLowerCase().replace(/\s+/g, '-');
-
-      if (!newUsername || !newRoom) {
-        alert("Username နှင့် Room ID ဖြည့်စွက်ပေးပါ။");
-        return;
-      }
-
-      // Old Room User Presence Cleanup
-      if (currentRoomId) {
-        db.ref(`rooms/${currentRoomId}/users/${myClientId}`).remove();
-      }
-
-      localStorage.setItem('chatsphere_username', newUsername);
-      localStorage.setItem('chatsphere_password', newPassword);
-      localStorage.setItem('chatsphere_room', newRoom);
-
-      currentUsername = newUsername;
-      currentPassword = newPassword;
-      currentRoomId = newRoom;
-
-      displayUsername.textContent = currentUsername;
-      displayRoomId.textContent = `#${currentRoomId}`;
-
-      initRoomSystem();
-      profileModal.classList.add('hidden');
-    });
-
-    // REALTIME ROOM SYSTEM
-    function initRoomSystem() {
-      const roomRef = db.ref(`rooms/${currentRoomId}`);
-      const userRef = roomRef.child(`users/${myClientId}`);
-
-      // 1. Direct Presence Registration
-      userRef.set({
+      globalPresenceRef.set({
+        id: myClientId,
         name: currentUsername,
-        online: true,
-        lastSeen: firebase.database.ServerValue.TIMESTAMP
+        online: true
       });
-      userRef.onDisconnect().remove();
+      globalPresenceRef.onDisconnect().remove();
 
-      // 2. Realtime Online Users Listener
-      roomRef.child('users').off();
-      roomRef.child('users').on('value', (snapshot) => {
+      // Listen to ALL Online Users
+      db.ref('global_online_users').on('value', (snapshot) => {
         usersContainer.innerHTML = '';
-        const users = snapshot.val() || {};
-        const userList = Object.values(users);
-        userCountEl.textContent = userList.length;
+        const usersObj = snapshot.val() || {};
+        const usersList = Object.values(usersObj);
+        
+        userCountEl.textContent = usersList.length;
 
-        userList.forEach(user => {
+        usersList.forEach(user => {
+          if (user.id === myClientId) return; // မွေးထုတ်ထားသော မိမိကိုယ်တိုင်ကို List မှ ခေတ္တချန်ထားမည်
+
           const userEl = document.createElement('div');
-          userEl.className = 'user-item';
-          const isMe = user.name === currentUsername;
-          userEl.innerHTML = `<div class="status-dot"></div><span>${escapeHTML(user.name)} ${isMe ? '(You)' : ''}</span>`;
+          userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
+          userEl.innerHTML = `<div class="status-dot"></div><span>${escapeHTML(user.name)}</span>`;
+          
+          userEl.addEventListener('click', () => {
+            selectUserToChat(user);
+          });
+
           usersContainer.appendChild(userEl);
         });
       });
+    }
 
-      // 3. Realtime Messages Listener
+    // SELECT USER TO CHAT
+    function selectUserToChat(targetUser) {
+      selectedTargetUser = targetUser;
+      targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
+      
+      // Generate Unique Direct Message Room ID (Sorting IDs ensures both users share the SAME room)
+      activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
+
+      // Enable UI
+      noChatMsg.classList.add('hidden');
+      chatForm.classList.remove('hidden');
+
+      // Re-render user active list
+      initGlobalPresence();
+
+      // Listen to Direct Messages
+      listenDirectMessages();
+    }
+
+    // LISTEN DIRECT MESSAGES
+    function listenDirectMessages() {
       messagesContainer.innerHTML = '';
-      roomRef.child('messages').off();
-      roomRef.child('messages').on('child_added', (snapshot) => {
+      if (!activeChatRoomId) return;
+
+      db.ref(`direct_messages/${activeChatRoomId}`).off();
+      db.ref(`direct_messages/${activeChatRoomId}`).on('child_added', (snapshot) => {
         renderMessage(snapshot.val());
-      });
-
-      // 4. Typing State Listener
-      roomRef.child('typing').off();
-      roomRef.child('typing').on('value', (snapshot) => {
-        const typers = snapshot.val() || {};
-        const activeTypers = Object.keys(typers).filter(id => id !== myClientId && typers[id] === true);
-
-        if (activeTypers.length > 0) {
-          typingIndicator.textContent = `တစ်ယောက်ယောက် စာရိုက်နေပါသည်။...`;
-        } else {
-          typingIndicator.textContent = '';
-        }
       });
     }
 
     function renderMessage(msg) {
-      const isMine = msg.clientId === myClientId;
+      const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
       msgDiv.className = `message ${isMine ? 'mine' : ''}`;
 
@@ -271,7 +243,7 @@
 
       msgDiv.innerHTML = `
         <div class="msg-meta">
-          <strong>${isMine ? 'You' : escapeHTML(msg.sender)}</strong>
+          <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
           <span class="msg-time">${timeStr}</span>
         </div>
         <div class="msg-text">${escapeHTML(msg.text)}</div>
@@ -281,33 +253,45 @@
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Send Message
+    // SEND DIRECT MESSAGE
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const text = messageInput.value.trim();
-      if (!text) return;
+      if (!text || !activeChatRoomId) return;
 
       const messageData = {
-        clientId: myClientId,
-        sender: currentUsername,
+        senderId: myClientId,
+        senderName: currentUsername,
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP
       };
 
-      db.ref(`rooms/${currentRoomId}/messages`).push(messageData);
-      db.ref(`rooms/${currentRoomId}/typing/${myClientId}`).remove();
+      db.ref(`direct_messages/${activeChatRoomId}`).push(messageData);
       messageInput.value = '';
     });
 
-    // Typing Event Handler
-    messageInput.addEventListener('input', () => {
-      const typingRef = db.ref(`rooms/${currentRoomId}/typing/${myClientId}`);
-      typingRef.set(true);
+    // PROFILE MODAL LOGIC
+    openProfileBtn.addEventListener('click', () => {
+      modalUsernameInput.value = currentUsername;
+      profileModal.classList.remove('hidden');
+    });
 
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        typingRef.remove();
-      }, 2000);
+    closeModalBtn.addEventListener('click', () => {
+      profileModal.classList.add('hidden');
+    });
+
+    saveProfileBtn.addEventListener('click', () => {
+      const newUsername = modalUsernameInput.value.trim();
+      if (!newUsername) return;
+
+      localStorage.setItem('chatsphere_username', newUsername);
+      currentUsername = newUsername;
+      displayMyUsername.textContent = currentUsername;
+
+      // Update Global Online Presence Name
+      db.ref(`global_online_users/${myClientId}`).update({ name: currentUsername });
+
+      profileModal.classList.add('hidden');
     });
 
     function escapeHTML(str) {
