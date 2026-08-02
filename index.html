@@ -63,6 +63,7 @@
         <div>
           <h4>MY PROFILE</h4>
           <p id="display-my-username">Guest</p>
+          <span id="display-my-id" style="font-size:0.75rem; color:#94a3b8;">ID: -</span>
         </div>
         <button id="open-profile-btn" class="edit-profile-btn">⚙️ Edit</button>
       </div>
@@ -129,11 +130,11 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Session Unique Client ID Generator
-    let myClientId = sessionStorage.getItem('chatsphere_client_id');
+    // Browser/Tab တိုင်းမှာ Client ID တစ်ခုတည်း ပိုမိုခိုင်မာအောင် ထိန်းပေးခြင်း
+    let myClientId = localStorage.getItem('chatsphere_client_id');
     if (!myClientId) {
       myClientId = 'usr_' + Math.random().toString(36).substr(2, 9);
-      sessionStorage.setItem('chatsphere_client_id', myClientId);
+      localStorage.setItem('chatsphere_client_id', myClientId);
     }
 
     let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
@@ -142,6 +143,7 @@
 
     // DOM Elements
     const displayMyUsername = document.getElementById('display-my-username');
+    const displayMyId = document.getElementById('display-my-id');
     const usersContainer = document.getElementById('users-container');
     const userCountEl = document.getElementById('user-count');
     const targetUsernameEl = document.getElementById('target-username');
@@ -163,6 +165,7 @@
           await auth.signInAnonymously();
         }
         displayMyUsername.textContent = currentUsername;
+        displayMyId.textContent = `ID: ${myClientId.substr(-4)}`;
         initGlobalPresence();
       } catch (error) {
         console.error("Auth Error:", error);
@@ -189,11 +192,20 @@
         userCountEl.textContent = usersList.length;
 
         usersList.forEach(user => {
-          if (user.id === myClientId) return; // မွေးထုတ်ထားသော မိမိကိုယ်တိုင်ကို List မှ ခေတ္တချန်ထားမည်
+          // မိမိကိုယ်တိုင်ကို စာရင်းထဲမှ ပုန်းမထားဘဲ အခြားသူများကိုသာ ပြသမည်
+          if (user.id === myClientId) return; 
 
           const userEl = document.createElement('div');
           userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
-          userEl.innerHTML = `<div class="status-dot"></div><span>${escapeHTML(user.name)}</span>`;
+          
+          // ID အတိုလေးပါ တပါတည်းပြပေးထားသဖြင့် နာမည်တူနေလျှင်လည်း ခွဲခြားနိုင်ပါသည်
+          userEl.innerHTML = `
+            <div class="status-dot"></div>
+            <div>
+              <div style="font-weight:bold; color:#f8fafc;">${escapeHTML(user.name)}</div>
+              <div style="font-size:0.7rem; color:#94a3b8;">ID: ${user.id.substr(-4)}</div>
+            </div>
+          `;
           
           userEl.addEventListener('click', () => {
             selectUserToChat(user);
@@ -207,18 +219,18 @@
     // SELECT USER TO CHAT
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
-      targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
+      targetUsernameEl.textContent = `💬 ${targetUser.name} (ID: ${targetUser.id.substr(-4)}) နှင့် စာပို့နေပါသည်`;
       
-      // Generate Unique Direct Message Room ID (Sorting IDs ensures both users share the SAME room)
+      // Sorting IDs ensures both users share the exact SAME room
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
       // Enable UI
       noChatMsg.classList.add('hidden');
       chatForm.classList.remove('hidden');
 
-      // Re-render user active list
-      initGlobalPresence();
-
+      // Update UI active tab state
+      document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+      
       // Listen to Direct Messages
       listenDirectMessages();
     }
