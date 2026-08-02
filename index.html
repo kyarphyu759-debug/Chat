@@ -39,7 +39,6 @@
     .user-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .action-btn { background: #334155; border: none; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
     .action-btn.block-btn:hover { background: #eab308; color: #000; }
-    .action-btn.delete-btn:hover { background: #ef4444; color: #fff; }
 
     /* Chat Area */
     .chat-area { flex: 1; display: flex; flex-direction: column; position: absolute; top:0; left:0; width:100%; height:100%; background: #1e293b; z-index: 1; transition: transform 0.3s ease; }
@@ -50,13 +49,48 @@
 
     .chat-area.active-mobile { z-index: 3; }
 
-    .chat-header { padding: 0.8rem 1rem; background: #0f172a; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; }
+    .chat-header { padding: 0.8rem 1rem; background: #0f172a; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; position: relative; }
     .back-btn { background: none; border: none; color: #38bdf8; font-size: 1.2rem; cursor: pointer; display: block; padding: 0 5px; }
     @media (min-width: 768px) { .back-btn { display: none; } }
 
     .target-title { font-size: 0.95rem; font-weight: bold; color: #f8fafc; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .messages-container { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; background: #1e293b; }
+    /* Online status & Menu Trigger */
+    .header-right-group { display: flex; align-items: center; gap: 12px; }
+    .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
+    .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+    .chat-menu-btn:hover { color: #f8fafc; background: #334155; }
+
+    /* Chat Options Dropdown Menu */
+    .chat-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 1rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      min-width: 170px;
+      overflow: hidden;
+    }
+    .chat-dropdown-menu button {
+      background: none;
+      border: none;
+      color: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-dropdown-menu button:hover { background: #334155; }
+
+    .messages-container { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; background: #1e293b; background-size: cover; background-position: center; }
     
     .message { 
       max-width: 80%; 
@@ -185,7 +219,17 @@
       <div class="chat-header">
         <button class="back-btn" id="back-to-users-btn">⬅️</button>
         <div class="target-title" id="target-username">ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ</div>
-        <span style="font-size:0.75rem; color: #22c55e; white-space: nowrap;">● Live</span>
+        
+        <div class="header-right-group">
+          <span class="online-badge">● online</span>
+          <button class="chat-menu-btn" id="chat-menu-btn" title="Options">☰</button>
+        </div>
+
+        <!-- Dropdown Menu for Header -->
+        <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
+          <button id="menu-set-nickname">✏️ Set nickname</button>
+          <button id="menu-change-bg">🎨 Change background</button>
+        </div>
       </div>
 
       <div class="messages-container" id="messages-container">
@@ -256,7 +300,15 @@
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
-    // Direct Safe Array Storage
+    function getStoredObject(key) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        return (data && typeof data === 'object') ? data : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
     function getStoredArray(key) {
       try {
         const data = JSON.parse(localStorage.getItem(key));
@@ -267,7 +319,7 @@
     }
 
     let blockedUserIds = getStoredArray('chatsphere_blocked_users');
-    let hiddenUserIds = getStoredArray('chatsphere_hidden_users');
+    let nicknames = getStoredObject('chatsphere_nicknames');
     let latestUsersList = [];
 
     // Active Action Variables
@@ -303,6 +355,22 @@
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const modalUsernameInput = document.getElementById('modal-username-input');
 
+    // Chat Header Menu Elements
+    const chatMenuBtn = document.getElementById('chat-menu-btn');
+    const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
+    const menuSetNickname = document.getElementById('menu-set-nickname');
+    const menuChangeBg = document.getElementById('menu-change-bg');
+
+    // Load saved background
+    const savedBg = localStorage.getItem('chatsphere_chat_bg');
+    if (savedBg) {
+      if (savedBg.startsWith('http') || savedBg.startsWith('data:')) {
+        messagesContainer.style.backgroundImage = `url('${savedBg}')`;
+      } else {
+        messagesContainer.style.background = savedBg;
+      }
+    }
+
     // STARTUP
     window.addEventListener('DOMContentLoaded', async () => {
       try {
@@ -316,9 +384,69 @@
       }
     });
 
-    // MOBILE BACK BUTTON
     backToUsersBtn.addEventListener('click', () => {
       chatArea.classList.remove('active-mobile');
+    });
+
+    // HEADER DROPDOWN MENU TOGGLE
+    chatMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      chatDropdownMenu.classList.toggle('hidden');
+    });
+
+    // SET NICKNAME LOGIC
+    menuSetNickname.addEventListener('click', () => {
+      chatDropdownMenu.classList.add('hidden');
+      if (!selectedTargetUser) {
+        alert("ကျေးဇူးပြု၍ User တစ်ယောက်ကို အရင် ရွေးချယ်ပါ!");
+        return;
+      }
+
+      const currentNick = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
+      const newNickname = prompt(`"${selectedTargetUser.name}" အတွက် Nickname သတ်မှတ်ပါ:`, currentNick);
+
+      if (newNickname !== null) {
+        if (newNickname.trim() === '') {
+          delete nicknames[selectedTargetUser.id];
+        } else {
+          nicknames[selectedTargetUser.id] = newNickname.trim();
+        }
+        localStorage.setItem('chatsphere_nicknames', JSON.stringify(nicknames));
+        
+        // Update Title and UI
+        const displayName = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
+        targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
+        renderUsersUI();
+      }
+    });
+
+    // CHANGE BACKGROUND LOGIC
+    menuChangeBg.addEventListener('click', () => {
+      chatDropdownMenu.classList.add('hidden');
+      const bgInput = prompt("Background အတွက် Color Code (ဥပမာ #0f172a) သို့မဟုတ် Image URL ထည့်ပါ:\n(မူလအတိုင်းပြန်ထားချင်ရင် အလွတ်ထားခဲ့ပါ)");
+
+      if (bgInput !== null) {
+        const trimmed = bgInput.trim();
+        if (trimmed === '') {
+          messagesContainer.style.background = '#1e293b';
+          messagesContainer.style.backgroundImage = 'none';
+          localStorage.removeItem('chatsphere_chat_bg');
+        } else if (trimmed.startsWith('http') || trimmed.startsWith('data:')) {
+          messagesContainer.style.backgroundImage = `url('${trimmed}')`;
+          localStorage.setItem('chatsphere_chat_bg', trimmed);
+        } else {
+          messagesContainer.style.background = trimmed;
+          messagesContainer.style.backgroundImage = 'none';
+          localStorage.setItem('chatsphere_chat_bg', trimmed);
+        }
+      }
+    });
+
+    // Close Dropdown when clicked outside
+    document.addEventListener('click', (e) => {
+      if (!chatDropdownMenu.contains(e.target) && e.target !== chatMenuBtn) {
+        chatDropdownMenu.classList.add('hidden');
+      }
     });
 
     // GLOBAL ONLINE PRESENCE SYSTEM
@@ -339,19 +467,19 @@
       });
     }
 
-function renderUsersUI() {
+    function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
 
       latestUsersList.forEach(user => {
-        // မိမိကိုယ်ပိုင် သို့မဟုတ် Block ထားသည့် User များကို ဖျောက်မည်
         if (user.id === myClientId || blockedUserIds.includes(user.id)) return; 
 
-        // 🛑 "က" "အ" "မ" သို့မဟုတ် နာမည်မပြည့်စုံသူများကို စာရင်းမှ မပြဘဲ ကျော်သွားမည်
         const cleanName = (user.name || '').trim();
         if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
 
         visibleCount++;
+
+        const displayName = nicknames[user.id] || cleanName;
 
         const userEl = document.createElement('div');
         userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
@@ -359,7 +487,7 @@ function renderUsersUI() {
         userEl.innerHTML = `
           <div class="user-info-group">
             <div class="status-dot"></div>
-            <span class="user-name">${escapeHTML(cleanName)}</span>
+            <span class="user-name">${escapeHTML(displayName)}</span>
           </div>
           <div class="user-actions">
             <button class="action-btn block-btn" title="Block User">🚫 Block</button>
@@ -382,28 +510,17 @@ function renderUsersUI() {
 
       userCountEl.textContent = visibleCount;
     }
-    // BLOCK / UNBLOCK LOGIC
-    function toggleBlockUser(userId) {
-      if (blockedUserIds.includes(userId)) {
-        blockedUserIds = blockedUserIds.filter(id => id !== userId);
-      } else {
-        blockedUserIds.push(userId);
-        if (selectedTargetUser && selectedTargetUser.id === userId) {
-          chatArea.classList.remove('active-mobile');
-        }
-      }
-      localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUserIds));
-      renderUsersUI();
-    }
 
-    // SINGLE USER DELETE LOGIC
-    function deleteUserFromList(userId) {
-      if (confirm("ဤ User တစ်ယောက်တည်းကိုသာ သင့်စာရင်းမှ ဖျက်ပစ်ရန် သေချာပါသလား?")) {
-        if (!hiddenUserIds.includes(userId)) {
-          hiddenUserIds.push(userId);
-          localStorage.setItem('chatsphere_hidden_users', JSON.stringify(hiddenUserIds));
+    // BLOCK LOGIC
+    function blockUser(userId) {
+      if (confirm("ဤ User ကို Block ရန် သေချာပါသလား? Online List မှ ပျောက်သွားပြီး စာလည်း ပို့နိုင်တော့မည် မဟုတ်ပါ။")) {
+        if (!Array.isArray(blockedUserIds)) blockedUserIds = [];
+
+        if (!blockedUserIds.includes(userId)) {
+          blockedUserIds.push(userId);
+          localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUserIds));
         }
-        
+
         if (selectedTargetUser && selectedTargetUser.id === userId) {
           selectedTargetUser = null;
           activeChatRoomId = null;
@@ -421,7 +538,8 @@ function renderUsersUI() {
 
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
-      targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
+      const displayName = nicknames[targetUser.id] || targetUser.name;
+      targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
       noChatMsg.classList.add('hidden');
