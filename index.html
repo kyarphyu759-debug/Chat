@@ -6,7 +6,7 @@
   <title>ChatSphere - Real-time Direct Messenger</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
     .hidden { display: none !important; }
 
     #chat-app { display: flex; width: 100vw; height: 100vh; max-width: 1100px; background: #1e293b; overflow: hidden; position: relative; }
@@ -36,7 +36,7 @@
     .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
     .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
 
-    .user-actions { display: flex; gap: 4px; align-shrink: 0; }
+    .user-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .action-btn { background: #334155; border: none; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
     .action-btn.block-btn:hover { background: #eab308; color: #000; }
     .action-btn.delete-btn:hover { background: #ef4444; color: #fff; }
@@ -68,6 +68,9 @@
       direction: ltr !important; 
       text-align: left !important;
       font-size: 0.9rem;
+      user-select: none;
+      cursor: pointer;
+      position: relative;
     }
     @media (min-width: 768px) { .message { max-width: 65%; } }
     .message.mine { background: #2563eb; align-self: flex-end; }
@@ -83,7 +86,34 @@
       line-height: 1.3;
     }
 
-    .input-area { padding: 0.75rem 1rem; background: #0f172a; display: flex; gap: 8px; border-top: 1px solid #334155; }
+    /* Reply Preview inside Message Bubble */
+    .reply-quote {
+      background: rgba(0, 0, 0, 0.2);
+      border-left: 3px solid #38bdf8;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+      color: #e2e8f0;
+    }
+    .reply-quote strong { color: #38bdf8; display: block; font-size: 0.7rem; }
+
+    /* Input & Reply Preview Area */
+    .input-wrapper { background: #0f172a; border-top: 1px solid #334155; display: flex; flex-direction: column; }
+    
+    .reply-preview-bar {
+      background: #1e293b;
+      padding: 6px 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid #38bdf8;
+      font-size: 0.8rem;
+    }
+    .reply-preview-content { color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
+    .close-reply-btn { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1rem; }
+
+    .input-area { padding: 0.75rem 1rem; display: flex; gap: 8px; }
     input { flex: 1; padding: 0.65rem 0.8rem; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #fff; font-size: 0.9rem; outline: none; }
     input:focus { border-color: #38bdf8; }
     button.send-btn { padding: 0.65rem 1.2rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -91,6 +121,34 @@
     .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
 
     .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
+
+    /* Context Action Menu Modal/PopUp */
+    .context-menu {
+      position: fixed;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      min-width: 130px;
+      overflow: hidden;
+    }
+    .context-menu button {
+      background: none;
+      border: none;
+      color: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .context-menu button:hover { background: #334155; }
+    .context-menu button.danger { color: #ef4444; }
 
     /* Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -136,11 +194,24 @@
         <div class="no-chat-selected" id="no-chat-msg">👈 ဘေးဘက် Online Users စာရင်းမှ ပို့ချင်သောသူကို နှိပ်ပါ။</div>
       </div>
 
-      <form class="input-area hidden" id="chat-form">
-        <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
-        <button type="submit" class="send-btn">Send</button>
-      </form>
+      <div class="input-wrapper hidden" id="input-wrapper">
+        <div class="reply-preview-bar hidden" id="reply-preview-bar">
+          <div class="reply-preview-content" id="reply-preview-text"></div>
+          <button class="close-reply-btn" id="cancel-reply-btn">✕</button>
+        </div>
+        <form class="input-area" id="chat-form">
+          <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
+          <button type="submit" class="send-btn">Send</button>
+        </form>
+      </div>
     </div>
+  </div>
+
+  <!-- Context Menu for Message Actions -->
+  <div id="context-menu" class="context-menu hidden">
+    <button id="ctx-reply-btn">↩️ Reply</button>
+    <button id="ctx-edit-btn">✏️ Edit</button>
+    <button id="ctx-delete-btn" class="danger">🗑️ Delete</button>
   </div>
 
   <!-- Profile Modal -->
@@ -187,9 +258,13 @@
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
-    // Blocked & Hidden User State Storage
     let blockedUserIds = JSON.parse(localStorage.getItem('chatsphere_blocked_users') || '[]');
     let hiddenUserIds = JSON.parse(localStorage.getItem('chatsphere_hidden_users') || '[]');
+
+    // Active Action Variables
+    let selectedMsgData = null;
+    let selectedMsgKey = null;
+    let activeReplyData = null;
 
     // DOM Elements
     const displayMyUsername = document.getElementById('display-my-username');
@@ -198,10 +273,20 @@
     const targetUsernameEl = document.getElementById('target-username');
     const messagesContainer = document.getElementById('messages-container');
     const noChatMsg = document.getElementById('no-chat-msg');
+    const inputWrapper = document.getElementById('input-wrapper');
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
     const chatArea = document.getElementById('chat-area');
     const backToUsersBtn = document.getElementById('back-to-users-btn');
+
+    const replyPreviewBar = document.getElementById('reply-preview-bar');
+    const replyPreviewText = document.getElementById('reply-preview-text');
+    const cancelReplyBtn = document.getElementById('cancel-reply-btn');
+
+    const contextMenu = document.getElementById('context-menu');
+    const ctxReplyBtn = document.getElementById('ctx-reply-btn');
+    const ctxEditBtn = document.getElementById('ctx-edit-btn');
+    const ctxDeleteBtn = document.getElementById('ctx-delete-btn');
 
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
@@ -242,15 +327,13 @@
         usersContainer.innerHTML = '';
         const usersObj = snapshot.val() || {};
         const usersList = Object.values(usersObj);
-        
         let visibleCount = 0;
 
         usersList.forEach(user => {
           if (user.id === myClientId) return; 
-          if (hiddenUserIds.includes(user.id)) return; // Filter Deleted Users
+          if (hiddenUserIds.includes(user.id)) return;
 
           visibleCount++;
-
           const isBlocked = blockedUserIds.includes(user.id);
 
           const userEl = document.createElement('div');
@@ -267,9 +350,8 @@
             </div>
           `;
           
-          // Select User Click
           userEl.addEventListener('click', (e) => {
-            if (e.target.classList.contains('action-btn')) return; // Ignore button clicks
+            if (e.target.classList.contains('action-btn')) return;
             if (isBlocked) {
               alert("ဒီ User ကို Block ထားပါသည်! စာပို့ရန် Unblock ပြန်လုပ်ပါ။");
               return;
@@ -277,16 +359,12 @@
             selectUserToChat(user);
           });
 
-          // Block Button Click
-          const blockBtn = userEl.querySelector('.block-btn');
-          blockBtn.addEventListener('click', (e) => {
+          userEl.querySelector('.block-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             toggleBlockUser(user.id);
           });
 
-          // Delete Button Click
-          const deleteBtn = userEl.querySelector('.delete-btn');
-          deleteBtn.addEventListener('click', (e) => {
+          userEl.querySelector('.delete-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             deleteUserFromList(user.id);
           });
@@ -298,7 +376,6 @@
       });
     }
 
-    // BLOCK / UNBLOCK LOGIC
     function toggleBlockUser(userId) {
       if (blockedUserIds.includes(userId)) {
         blockedUserIds = blockedUserIds.filter(id => id !== userId);
@@ -312,7 +389,6 @@
       initGlobalPresence();
     }
 
-    // DELETE LOGIC
     function deleteUserFromList(userId) {
       if (confirm("ဤ User ကို သင့် စာရင်းမှ ဖျက်ပစ်ရန် သေချာပါသလား?")) {
         hiddenUserIds.push(userId);
@@ -323,7 +399,7 @@
           activeChatRoomId = null;
           targetUsernameEl.textContent = 'ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ';
           noChatMsg.classList.remove('hidden');
-          chatForm.classList.add('hidden');
+          inputWrapper.classList.add('hidden');
           messagesContainer.innerHTML = '';
           messagesContainer.appendChild(noChatMsg);
           chatArea.classList.remove('active-mobile');
@@ -332,22 +408,16 @@
       }
     }
 
-    // SELECT USER TO CHAT
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
-      
       targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
-      
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
       noChatMsg.classList.add('hidden');
-      chatForm.classList.remove('hidden');
-
-      // Mobile View Slide Effect
+      inputWrapper.classList.remove('hidden');
       chatArea.classList.add('active-mobile');
 
       document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
-      
       listenDirectMessages();
     }
 
@@ -357,29 +427,143 @@
       if (!activeChatRoomId) return;
 
       db.ref(`direct_messages/${activeChatRoomId}`).off();
-      db.ref(`direct_messages/${activeChatRoomId}`).on('child_added', (snapshot) => {
-        renderMessage(snapshot.val());
+      db.ref(`direct_messages/${activeChatRoomId}`).on('value', (snapshot) => {
+        messagesContainer.innerHTML = '';
+        const data = snapshot.val();
+        if (data) {
+          Object.keys(data).forEach(key => {
+            renderMessage(key, data[key]);
+          });
+        }
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
     }
 
-    function renderMessage(msg) {
+    // RENDER MESSAGES WITH LONG PRESS
+    function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
       msgDiv.className = `message ${isMine ? 'mine' : ''}`;
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+      let replyHTML = '';
+      if (msg.replyTo) {
+        replyHTML = `
+          <div class="reply-quote">
+            <strong>${escapeHTML(msg.replyTo.senderName)}</strong>
+            ${escapeHTML(msg.replyTo.text)}
+          </div>
+        `;
+      }
+
       msgDiv.innerHTML = `
         <div class="msg-meta">
           <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
-          <span class="msg-time">${timeStr}</span>
+          <span class="msg-time">${timeStr} ${msg.isEdited ? '(edited)' : ''}</span>
         </div>
+        ${replyHTML}
         <div class="msg-text" dir="ltr">${escapeHTML(msg.text)}</div>
       `;
 
+      // Long Press Event Handling
+      let pressTimer;
+
+      const startPress = (e) => {
+        pressTimer = setTimeout(() => {
+          showContextMenu(e, key, msg, isMine);
+        }, 500); // 0.5s long press
+      };
+
+      const cancelPress = () => {
+        clearTimeout(pressTimer);
+      };
+
+      msgDiv.addEventListener('touchstart', startPress, { passive: true });
+      msgDiv.addEventListener('touchend', cancelPress);
+      msgDiv.addEventListener('touchmove', cancelPress);
+      
+      msgDiv.addEventListener('mousedown', (e) => {
+        if (e.button === 0) startPress(e);
+      });
+      msgDiv.addEventListener('mouseup', cancelPress);
+      msgDiv.addEventListener('mouseleave', cancelPress);
+
+      // Context Menu on Right Click
+      msgDiv.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e, key, msg, isMine);
+      });
+
       messagesContainer.appendChild(msgDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+
+    // SHOW CONTEXT MENU (DELETE, REPLY, EDIT)
+    function showContextMenu(e, key, msg, isMine) {
+      selectedMsgKey = key;
+      selectedMsgData = msg;
+
+      const touch = e.touches ? e.touches[0] : e;
+      let x = touch.clientX;
+      let y = touch.clientY;
+
+      // Restrict Edit button for other users' messages
+      if (isMine) {
+        ctxEditBtn.classList.remove('hidden');
+      } else {
+        ctxEditBtn.classList.add('hidden');
+      }
+
+      contextMenu.style.top = `${y}px`;
+      contextMenu.style.left = `${x}px`;
+      contextMenu.classList.remove('hidden');
+    }
+
+    // Hide context menu when clicked outside
+    document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.classList.add('hidden');
+      }
+    });
+
+    // CONTEXT ACTIONS
+    // 1. REPLY ACTION
+    ctxReplyBtn.addEventListener('click', () => {
+      contextMenu.classList.add('hidden');
+      activeReplyData = {
+        senderName: selectedMsgData.senderId === myClientId ? 'You' : selectedMsgData.senderName,
+        text: selectedMsgData.text
+      };
+      
+      replyPreviewText.textContent = `Replying to ${activeReplyData.senderName}: "${activeReplyData.text}"`;
+      replyPreviewBar.classList.remove('hidden');
+      messageInput.focus();
+    });
+
+    cancelReplyBtn.addEventListener('click', () => {
+      activeReplyData = null;
+      replyPreviewBar.classList.add('hidden');
+    });
+
+    // 2. EDIT ACTION
+    ctxEditBtn.addEventListener('click', () => {
+      contextMenu.classList.add('hidden');
+      const newText = prompt("စာတိုကို ပြင်ဆင်ပါ:", selectedMsgData.text);
+      if (newText !== null && newText.trim() !== "" && newText !== selectedMsgData.text) {
+        db.ref(`direct_messages/${activeChatRoomId}/${selectedMsgKey}`).update({
+          text: newText.trim(),
+          isEdited: true
+        });
+      }
+    });
+
+    // 3. DELETE ACTION
+    ctxDeleteBtn.addEventListener('click', () => {
+      contextMenu.classList.add('hidden');
+      if (confirm("ဤ စာကြောင်းကို Permanent ဖျက်ပစ်ရန် သေချာပါသလား?")) {
+        db.ref(`direct_messages/${activeChatRoomId}/${selectedMsgKey}`).remove();
+      }
+    });
 
     // SEND DIRECT MESSAGE
     chatForm.addEventListener('submit', (e) => {
@@ -394,8 +578,15 @@
         timestamp: firebase.database.ServerValue.TIMESTAMP
       };
 
+      if (activeReplyData) {
+        messageData.replyTo = activeReplyData;
+      }
+
       db.ref(`direct_messages/${activeChatRoomId}`).push(messageData);
+
       messageInput.value = '';
+      activeReplyData = null;
+      replyPreviewBar.classList.add('hidden');
     });
 
     // PROFILE MODAL LOGIC
@@ -417,7 +608,6 @@
       displayMyUsername.textContent = currentUsername;
 
       db.ref(`global_online_users/${myClientId}`).update({ name: currentUsername });
-
       profileModal.classList.add('hidden');
     });
 
