@@ -29,7 +29,7 @@
     .target-user-bar { display: flex; align-items: center; gap: 10px; }
 
     .messages-container { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
-    .message { max-width: 65%; padding: 0.75rem 1rem; border-radius: 12px; background: #334155; align-self: flex-start; word-wrap: break-word; }
+    .message { max-width: 65%; padding: 0.75rem 1rem; border-radius: 12px; background: #334155; align-self: flex-start; word-wrap: break-word; unicode-bidi: plaintext; text-align: left; }
     .message.mine { background: #2563eb; align-self: flex-end; }
     .msg-meta { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
     .msg-time { opacity: 0.7; }
@@ -63,7 +63,6 @@
         <div>
           <h4>MY PROFILE</h4>
           <p id="display-my-username">Guest</p>
-          <span id="display-my-id" style="font-size:0.75rem; color:#94a3b8;">ID: -</span>
         </div>
         <button id="open-profile-btn" class="edit-profile-btn">⚙️ Edit</button>
       </div>
@@ -130,7 +129,6 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Browser/Tab တိုင်းမှာ Client ID တစ်ခုတည်း ပိုမိုခိုင်မာအောင် ထိန်းပေးခြင်း
     let myClientId = localStorage.getItem('chatsphere_client_id');
     if (!myClientId) {
       myClientId = 'usr_' + Math.random().toString(36).substr(2, 9);
@@ -138,12 +136,11 @@
     }
 
     let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
-    let selectedTargetUser = null; // { id, name }
+    let selectedTargetUser = null;
     let activeChatRoomId = null;
 
     // DOM Elements
     const displayMyUsername = document.getElementById('display-my-username');
-    const displayMyId = document.getElementById('display-my-id');
     const usersContainer = document.getElementById('users-container');
     const userCountEl = document.getElementById('user-count');
     const targetUsernameEl = document.getElementById('target-username');
@@ -165,7 +162,6 @@
           await auth.signInAnonymously();
         }
         displayMyUsername.textContent = currentUsername;
-        displayMyId.textContent = `ID: ${myClientId.substr(-4)}`;
         initGlobalPresence();
       } catch (error) {
         console.error("Auth Error:", error);
@@ -183,7 +179,6 @@
       });
       globalPresenceRef.onDisconnect().remove();
 
-      // Listen to ALL Online Users
       db.ref('global_online_users').on('value', (snapshot) => {
         usersContainer.innerHTML = '';
         const usersObj = snapshot.val() || {};
@@ -192,19 +187,14 @@
         userCountEl.textContent = usersList.length;
 
         usersList.forEach(user => {
-          // မိမိကိုယ်တိုင်ကို စာရင်းထဲမှ ပုန်းမထားဘဲ အခြားသူများကိုသာ ပြသမည်
           if (user.id === myClientId) return; 
 
           const userEl = document.createElement('div');
           userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
           
-          // ID အတိုလေးပါ တပါတည်းပြပေးထားသဖြင့် နာမည်တူနေလျှင်လည်း ခွဲခြားနိုင်ပါသည်
           userEl.innerHTML = `
             <div class="status-dot"></div>
-            <div>
-              <div style="font-weight:bold; color:#f8fafc;">${escapeHTML(user.name)}</div>
-              <div style="font-size:0.7rem; color:#94a3b8;">ID: ${user.id.substr(-4)}</div>
-            </div>
+            <span>${escapeHTML(user.name)}</span>
           `;
           
           userEl.addEventListener('click', () => {
@@ -219,19 +209,16 @@
     // SELECT USER TO CHAT
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
-      targetUsernameEl.textContent = `💬 ${targetUser.name} (ID: ${targetUser.id.substr(-4)}) နှင့် စာပို့နေပါသည်`;
+      // ID မပါဘဲ နာမည်ပဲ ပြသရန် ပြင်ဆင်ထားပါသည်
+      targetUsernameEl.textContent = `💬 ${targetUser.name} နှင့် စာပို့နေပါသည်`;
       
-      // Sorting IDs ensures both users share the exact SAME room
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
-      // Enable UI
       noChatMsg.classList.add('hidden');
       chatForm.classList.remove('hidden');
 
-      // Update UI active tab state
       document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
       
-      // Listen to Direct Messages
       listenDirectMessages();
     }
 
@@ -253,12 +240,15 @@
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+      // ပြောင်းပြန် ဖြစ်နေသော စာတိုများ ပုံမှန် ပေါ်စေရန်
+      let textContent = msg.text || '';
+
       msgDiv.innerHTML = `
         <div class="msg-meta">
           <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
           <span class="msg-time">${timeStr}</span>
         </div>
-        <div class="msg-text">${escapeHTML(msg.text)}</div>
+        <div class="msg-text">${escapeHTML(textContent)}</div>
       `;
 
       messagesContainer.appendChild(msgDiv);
@@ -300,7 +290,6 @@
       currentUsername = newUsername;
       displayMyUsername.textContent = currentUsername;
 
-      // Update Global Online Presence Name
       db.ref(`global_online_users/${myClientId}`).update({ name: currentUsername });
 
       profileModal.classList.add('hidden');
