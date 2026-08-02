@@ -86,7 +86,6 @@
       line-height: 1.3;
     }
 
-    /* Reply Preview inside Message Bubble */
     .reply-quote {
       background: rgba(0, 0, 0, 0.2);
       border-left: 3px solid #38bdf8;
@@ -98,7 +97,6 @@
     }
     .reply-quote strong { color: #38bdf8; display: block; font-size: 0.7rem; }
 
-    /* Input & Reply Preview Area */
     .input-wrapper { background: #0f172a; border-top: 1px solid #334155; display: flex; flex-direction: column; }
     
     .reply-preview-bar {
@@ -122,7 +120,7 @@
 
     .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
 
-    /* Context Action Menu Modal/PopUp */
+    /* Context Menu */
     .context-menu {
       position: fixed;
       background: #0f172a;
@@ -258,8 +256,19 @@
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
-    let blockedUserIds = JSON.parse(localStorage.getItem('chatsphere_blocked_users') || '[]');
-    let hiddenUserIds = JSON.parse(localStorage.getItem('chatsphere_hidden_users') || '[]');
+    // Direct Safe Array Storage
+    function getStoredArray(key) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    let blockedUserIds = getStoredArray('chatsphere_blocked_users');
+    let hiddenUserIds = getStoredArray('chatsphere_hidden_users');
+    let latestUsersList = [];
 
     // Active Action Variables
     let selectedMsgData = null;
@@ -324,58 +333,56 @@
       globalPresenceRef.onDisconnect().remove();
 
       db.ref('global_online_users').on('value', (snapshot) => {
-        usersContainer.innerHTML = '';
         const usersObj = snapshot.val() || {};
-        const usersList = Object.values(usersObj);
-        let visibleCount = 0;
-
-        usersList.forEach(user => {
-          if (user.id === myClientId) return; 
-          if (hiddenUserIds.includes(user.id)) return;
-
-          visibleCount++;
-          const isBlocked = blockedUserIds.includes(user.id);
-
-          const userEl = document.createElement('div');
-          userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
-          
-          userEl.innerHTML = `
-            <div class="user-info-group">
-              <div class="status-dot" style="${isBlocked ? 'background:#ef4444; box-shadow:none;' : ''}"></div>
-              <span class="user-name">${escapeHTML(user.name)} ${isBlocked ? '<small style="color:#ef4444;">(Blocked)</small>' : ''}</span>
-            </div>
-            <div class="user-actions">
-              <button class="action-btn block-btn" title="${isBlocked ? 'Unblock' : 'Block'}">${isBlocked ? '🔓' : '🚫'}</button>
-              <button class="action-btn delete-btn" title="Delete User">🗑️</button>
-            </div>
-          `;
-          
-          userEl.addEventListener('click', (e) => {
-            if (e.target.classList.contains('action-btn')) return;
-            if (isBlocked) {
-              alert("ဒီ User ကို Block ထားပါသည်! စာပို့ရန် Unblock ပြန်လုပ်ပါ။");
-              return;
-            }
-            selectUserToChat(user);
-          });
-
-          userEl.querySelector('.block-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleBlockUser(user.id);
-          });
-
-          userEl.querySelector('.delete-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteUserFromList(user.id);
-          });
-
-          usersContainer.appendChild(userEl);
-        });
-
-        userCountEl.textContent = visibleCount;
+        latestUsersList = Object.values(usersObj);
+        renderUsersUI();
       });
     }
 
+function renderUsersUI() {
+      usersContainer.innerHTML = '';
+      let visibleCount = 0;
+
+      latestUsersList.forEach(user => {
+        // မိမိကိုယ်ပိုင် သို့မဟုတ် Block ထားသည့် User များကို ဖျောက်မည်
+        if (user.id === myClientId || blockedUserIds.includes(user.id)) return; 
+
+        // 🛑 "က" "အ" "မ" သို့မဟုတ် နာမည်မပြည့်စုံသူများကို စာရင်းမှ မပြဘဲ ကျော်သွားမည်
+        const cleanName = (user.name || '').trim();
+        if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
+
+        visibleCount++;
+
+        const userEl = document.createElement('div');
+        userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
+        
+        userEl.innerHTML = `
+          <div class="user-info-group">
+            <div class="status-dot"></div>
+            <span class="user-name">${escapeHTML(cleanName)}</span>
+          </div>
+          <div class="user-actions">
+            <button class="action-btn block-btn" title="Block User">🚫 Block</button>
+          </div>
+        `;
+        
+        userEl.addEventListener('click', (e) => {
+          if (e.target.classList.contains('action-btn')) return;
+          selectUserToChat(user);
+        });
+
+        const blockBtn = userEl.querySelector('.block-btn');
+        blockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          blockUser(user.id);
+        });
+
+        usersContainer.appendChild(userEl);
+      });
+
+      userCountEl.textContent = visibleCount;
+    }
+    // BLOCK / UNBLOCK LOGIC
     function toggleBlockUser(userId) {
       if (blockedUserIds.includes(userId)) {
         blockedUserIds = blockedUserIds.filter(id => id !== userId);
@@ -386,13 +393,16 @@
         }
       }
       localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUserIds));
-      initGlobalPresence();
+      renderUsersUI();
     }
 
+    // SINGLE USER DELETE LOGIC
     function deleteUserFromList(userId) {
-      if (confirm("ဤ User ကို သင့် စာရင်းမှ ဖျက်ပစ်ရန် သေချာပါသလား?")) {
-        hiddenUserIds.push(userId);
-        localStorage.setItem('chatsphere_hidden_users', JSON.stringify(hiddenUserIds));
+      if (confirm("ဤ User တစ်ယောက်တည်းကိုသာ သင့်စာရင်းမှ ဖျက်ပစ်ရန် သေချာပါသလား?")) {
+        if (!hiddenUserIds.includes(userId)) {
+          hiddenUserIds.push(userId);
+          localStorage.setItem('chatsphere_hidden_users', JSON.stringify(hiddenUserIds));
+        }
         
         if (selectedTargetUser && selectedTargetUser.id === userId) {
           selectedTargetUser = null;
@@ -404,7 +414,8 @@
           messagesContainer.appendChild(noChatMsg);
           chatArea.classList.remove('active-mobile');
         }
-        initGlobalPresence();
+
+        renderUsersUI();
       }
     }
 
@@ -466,13 +477,12 @@
         <div class="msg-text" dir="ltr">${escapeHTML(msg.text)}</div>
       `;
 
-      // Long Press Event Handling
       let pressTimer;
 
       const startPress = (e) => {
         pressTimer = setTimeout(() => {
           showContextMenu(e, key, msg, isMine);
-        }, 500); // 0.5s long press
+        }, 500);
       };
 
       const cancelPress = () => {
@@ -489,7 +499,6 @@
       msgDiv.addEventListener('mouseup', cancelPress);
       msgDiv.addEventListener('mouseleave', cancelPress);
 
-      // Context Menu on Right Click
       msgDiv.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         showContextMenu(e, key, msg, isMine);
@@ -507,7 +516,6 @@
       let x = touch.clientX;
       let y = touch.clientY;
 
-      // Restrict Edit button for other users' messages
       if (isMine) {
         ctxEditBtn.classList.remove('hidden');
       } else {
@@ -519,7 +527,6 @@
       contextMenu.classList.remove('hidden');
     }
 
-    // Hide context menu when clicked outside
     document.addEventListener('click', (e) => {
       if (!contextMenu.contains(e.target)) {
         contextMenu.classList.add('hidden');
@@ -527,7 +534,6 @@
     });
 
     // CONTEXT ACTIONS
-    // 1. REPLY ACTION
     ctxReplyBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
       activeReplyData = {
@@ -545,7 +551,6 @@
       replyPreviewBar.classList.add('hidden');
     });
 
-    // 2. EDIT ACTION
     ctxEditBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
       const newText = prompt("စာတိုကို ပြင်ဆင်ပါ:", selectedMsgData.text);
@@ -557,7 +562,6 @@
       }
     });
 
-    // 3. DELETE ACTION
     ctxDeleteBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
       if (confirm("ဤ စာကြောင်းကို Permanent ဖျက်ပစ်ရန် သေချာပါသလား?")) {
