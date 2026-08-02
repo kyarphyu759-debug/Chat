@@ -5,271 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChatSphere - Real-time Web Messenger</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .hidden { display: none !important; }
 
-    body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+    #chat-app { display: flex; width: 90vw; height: 85vh; max-width: 1100px; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .sidebar { width: 280px; background: #0f172a; padding: 1.5rem; border-right: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; }
+    
+    .room-info { background: #1e293b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
+    .room-info h4 { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+    .room-info p { color: #38bdf8; font-weight: bold; font-size: 1.1rem; margin-top: 0.25rem; word-break: break-all; }
 
-    .hidden {
-      display: none !important;
-    }
+    .users-list h3 { font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.75rem; }
+    .user-item { display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem; font-size: 0.95rem; background: #1e293b; padding: 6px 10px; border-radius: 6px; }
+    .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
 
-    /* Main Chat App Layout */
-    #chat-app {
-      display: flex;
-      width: 90vw;
-      height: 85vh;
-      max-width: 1100px;
-      background: #1e293b;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
+    .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+    .chat-header { padding: 1rem 1.5rem; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .user-profile-bar { display: flex; align-items: center; gap: 12px; }
+    .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+    .edit-profile-btn:hover { background: #38bdf8; color: #0f172a; }
 
-    /* Sidebar */
-    .sidebar {
-      width: 280px;
-      background: #0f172a;
-      padding: 1.5rem;
-      border-right: 1px solid #334155;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
+    .messages-container { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .message { max-width: 65%; padding: 0.75rem 1rem; border-radius: 12px; background: #334155; align-self: flex-start; word-wrap: break-word; }
+    .message.mine { background: #2563eb; align-self: flex-end; }
+    .msg-meta { font-size: 0.75rem; color: #cbd5e1; margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 1rem; }
+    .msg-time { opacity: 0.7; }
 
-    .room-info {
-      background: #1e293b;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-    }
+    .typing-indicator { font-size: 0.85rem; color: #94a3b8; font-style: italic; height: 20px; padding: 0 1.5rem; }
+    .input-area { padding: 1rem 1.5rem; background: #0f172a; display: flex; gap: 10px; }
+    input { width: 100%; padding: 0.75rem; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #fff; font-size: 1rem; outline: none; }
+    input:focus { border-color: #38bdf8; }
+    button { padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #1d4ed8; }
 
-    .room-info h4 {
-      color: #94a3b8;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .room-info p {
-      color: #38bdf8;
-      font-weight: bold;
-      font-size: 1.1rem;
-      margin-top: 0.25rem;
-      word-break: break-all;
-    }
-
-    .users-list h3 {
-      font-size: 0.9rem;
-      color: #94a3b8;
-      margin-bottom: 0.75rem;
-    }
-
-    .user-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: #22c55e;
-      border-radius: 50%;
-    }
-
-    /* Chat Area */
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    .chat-header {
-      padding: 1rem 1.5rem;
-      background: #1e293b;
-      border-bottom: 1px solid #334155;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .user-profile-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .edit-profile-btn {
-      background: #334155;
-      color: #38bdf8;
-      border: 1px solid #38bdf8;
-      padding: 0.3rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .edit-profile-btn:hover {
-      background: #38bdf8;
-      color: #0f172a;
-    }
-
-    .messages-container {
-      flex: 1;
-      padding: 1.5rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .message {
-      max-width: 65%;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      background: #334155;
-      align-self: flex-start;
-      word-wrap: break-word;
-    }
-
-    .message.mine {
-      background: #2563eb;
-      align-self: flex-end;
-    }
-
-    .msg-meta {
-      font-size: 0.75rem;
-      color: #cbd5e1;
-      margin-bottom: 0.25rem;
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .msg-time {
-      opacity: 0.7;
-    }
-
-    .typing-indicator {
-      font-size: 0.85rem;
-      color: #94a3b8;
-      font-style: italic;
-      height: 20px;
-      padding: 0 1.5rem;
-    }
-
-    /* Input Area */
-    .input-area {
-      padding: 1rem 1.5rem;
-      background: #0f172a;
-      display: flex;
-      gap: 10px;
-    }
-
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      background: #0f172a;
-      color: #fff;
-      font-size: 1rem;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #38bdf8;
-    }
-
-    button {
-      padding: 0.75rem 1.5rem;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    /* Profile Edit Modal Pop-up */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .modal-card {
-      background: #1e293b;
-      padding: 2rem;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-
-    .modal-card h3 {
-      color: #38bdf8;
-      margin-bottom: 1rem;
-    }
-
-    .modal-card label {
-      display: block;
-      font-size: 0.85rem;
-      color: #94a3b8;
-      margin-bottom: 0.3rem;
-      text-align: left;
-    }
-
-    .modal-card input {
-      margin-bottom: 1rem;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 0.5rem;
-    }
-
-    .cancel-btn {
-      background: #475569;
-    }
-
-    .cancel-btn:hover {
-      background: #334155;
-    }
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-card { background: #1e293b; padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-card h3 { color: #38bdf8; margin-bottom: 1rem; }
+    .modal-card label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; text-align: left; }
+    .modal-card input { margin-bottom: 1rem; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 0.5rem; }
+    .cancel-btn { background: #475569; }
+    .cancel-btn:hover { background: #334155; }
   </style>
 </head>
 <body>
 
-  <!-- MAIN CHAT APP DASHBOARD -->
   <div id="chat-app">
     <!-- Sidebar -->
     <div class="sidebar">
@@ -279,13 +61,13 @@
           <p id="display-room-id">#gaming-123</p>
         </div>
         <div class="users-list">
-          <h3>ONLINE USERS</h3>
+          <h3>ONLINE USERS (<span id="user-count">0</span>)</h3>
           <div id="users-container"></div>
         </div>
       </div>
     </div>
 
-    <!-- Main Chat Area -->
+    <!-- Chat Area -->
     <div class="chat-area">
       <div class="chat-header">
         <div class="user-profile-bar">
@@ -295,13 +77,9 @@
         <span style="font-size:0.8rem; color: #22c55e;">● Live Connected</span>
       </div>
 
-      <!-- Messages Stream -->
       <div class="messages-container" id="messages-container"></div>
-
-      <!-- Typing Indicator Bar -->
       <div class="typing-indicator" id="typing-indicator"></div>
 
-      <!-- Input Message Box -->
       <form class="input-area" id="chat-form">
         <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
         <button type="submit">Send</button>
@@ -309,21 +87,17 @@
     </div>
   </div>
 
-  <!-- PROFILE EDIT MODAL POPUP -->
+  <!-- Profile Modal -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <h3>အကောင့် အချက်အလက် ပြောင်းရန်</h3>
-      
       <label>User Name</label>
       <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required />
-
       <label>Password</label>
       <input type="password" id="modal-password-input" placeholder="Password အသစ်..." required />
-
       <label>Room ID</label>
       <input type="text" id="modal-room-input" placeholder="Room ID (eg. gaming-123)..." required />
-
-<div class="modal-actions">
+      <div class="modal-actions">
         <button type="button" id="save-profile-btn" style="flex: 1;">Save Updates</button>
         <button type="button" id="close-modal-btn" class="cancel-btn">Cancel</button>
       </div>
@@ -336,9 +110,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <script>
-    // 1. FIREBASE CONFIGURATION
     const firebaseConfig = {
-      apiKey: "AIzaSyDbrOZ_ro3YrBxpnHb3icXUxzuLTqtYCZo",
+      apiKey: "ဒီနေရာမှာ သင့် Firebase API Key အမှန်ကို အစားထိုးပါ", 
       authDomain: "chat-20ea2.firebaseapp.com",
       databaseURL: "https://chat-20ea2-default-rtdb.firebaseio.com",
       projectId: "chat-20ea2",
@@ -352,13 +125,15 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Session Persistence Local
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    // Unique Browser Client ID Generator (Tab တိုင်းမှာ User မတူအောင် ခွဲခြားရန်)
+    let myClientId = localStorage.getItem('chatsphere_client_id');
+    if (!myClientId) {
+      myClientId = 'user-' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('chatsphere_client_id', myClientId);
+    }
 
-    // App State Variables (Default values: Guest & gaming-123)
-    let currentUser = null;
     let currentRoomId = localStorage.getItem('chatsphere_room') || 'gaming-123';
-    let currentUsername = localStorage.getItem('chatsphere_username') || 'Guest';
+    let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
     let currentPassword = localStorage.getItem('chatsphere_password') || '';
     let typingTimeout = null;
 
@@ -366,12 +141,12 @@
     const displayRoomId = document.getElementById('display-room-id');
     const displayUsername = document.getElementById('display-username');
     const usersContainer = document.getElementById('users-container');
+    const userCountEl = document.getElementById('user-count');
     const messagesContainer = document.getElementById('messages-container');
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
     const typingIndicator = document.getElementById('typing-indicator');
 
-    // Modal Elements
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
     const closeModalBtn = document.getElementById('close-modal-btn');
@@ -380,31 +155,21 @@
     const modalPasswordInput = document.getElementById('modal-password-input');
     const modalRoomInput = document.getElementById('modal-room-input');
 
-    // 2. AUTO INITIALIZATION (Default ဝင်ရောက်ခြင်း)
+    // AUTO START
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         if (!auth.currentUser) {
           await auth.signInAnonymously();
         }
-        
-        currentUser = {
-          uid: auth.currentUser.uid,
-          name: currentUsername
-        };
-
-        // UI Update
         displayRoomId.textContent = `#${currentRoomId}`;
-        displayUsername.textContent = currentUser.name;
-
-        // Initialize Realtime System
+        displayUsername.textContent = currentUsername;
         initRoomSystem();
-
       } catch (error) {
-        console.error("Auto Login Error:", error);
+        console.error("Auth Error:", error);
       }
     });
 
-    // 3. PROFILE MODAL CONTROLS
+    // Profile Controls
     openProfileBtn.addEventListener('click', () => {
       modalUsernameInput.value = currentUsername;
       modalPasswordInput.value = currentPassword;
@@ -416,8 +181,7 @@
       profileModal.classList.add('hidden');
     });
 
-    // Save Updates (Username & Password ပြောင်းလဲခြင်း)
-    saveProfileBtn.addEventListener('click', async () => {
+    saveProfileBtn.addEventListener('click', () => {
       const newUsername = modalUsernameInput.value.trim();
       const newPassword = modalPasswordInput.value.trim();
       const newRoom = modalRoomInput.value.trim().toLowerCase().replace(/\s+/g, '-');
@@ -427,79 +191,70 @@
         return;
       }
 
-      try {
-        // Old Room presence ဖျက်ခြင်း
-        if (currentRoomId && currentUser && currentUser.uid) {
-          await db.ref(`rooms/${currentRoomId}/users/${currentUser.uid}`).remove().catch(e => console.log(e));
-        }
-
-        // LocalStorage Updates
-        localStorage.setItem('chatsphere_username', newUsername);
-        localStorage.setItem('chatsphere_password', newPassword);
-        localStorage.setItem('chatsphere_room', newRoom);
-
-        // State Updates
-        currentUsername = newUsername;
-        currentPassword = newPassword;
-        currentRoomId = newRoom;
-        
-        if (!currentUser) {
-          currentUser = { uid: auth.currentUser ? auth.currentUser.uid : 'guest-' + Date.now(), name: newUsername };
-        } else {
-          currentUser.name = newUsername;
-        }
-
-        // UI Update
-        displayUsername.textContent = currentUsername;
-        displayRoomId.textContent = `#${currentRoomId}`;
-
-        // Re-init Realtime System
-        initRoomSystem();
-
-        profileModal.classList.add('hidden');
-        alert("အကောင့် အချက်အလက်များ အောင်မြင်စွာ ပြောင်းလဲလိုက်ပါပြီ!");
-      } catch (err) {
-        console.error("Save Profile Error:", err);
-        // Error ဖြစ်ခဲ့ရင်တောင် UI အပိုင်းကို ပြောင်းပေးမည်
-        profileModal.classList.add('hidden');
+      // Old presence clean
+      if (currentRoomId) {
+        db.ref(`rooms/${currentRoomId}/users/${myClientId}`).remove();
       }
+
+      localStorage.setItem('chatsphere_username', newUsername);
+      localStorage.setItem('chatsphere_password', newPassword);
+      localStorage.setItem('chatsphere_room', newRoom);
+
+      currentUsername = newUsername;
+      currentPassword = newPassword;
+      currentRoomId = newRoom;
+
+      displayUsername.textContent = currentUsername;
+      displayRoomId.textContent = `#${currentRoomId}`;
+
+      initRoomSystem();
+      profileModal.classList.add('hidden');
     });
-    // 4. REAL-TIME DATA SYNCING LOGIC
+
+    // REAL-TIME PRESENCE & MESSAGES
     function initRoomSystem() {
       const roomRef = db.ref(`rooms/${currentRoomId}`);
 
-      // Online Status
-      const userPresenceRef = roomRef.child(`users/${currentUser.uid}`);
-      userPresenceRef.set({ name: currentUser.name, online: true });
-      userPresenceRef.onDisconnect().remove();
+      // 1. Presence System Setup
+      const myPresenceRef = roomRef.child(`users/${myClientId}`);
+      
+      // Connection State Listener
+      db.ref('.info/connected').on('value', (snap) => {
+        if (snap.val() === true) {
+          myPresenceRef.onDisconnect().remove();
+          myPresenceRef.set({ name: currentUsername, online: true });
+        }
+      });
 
-      // Active Users Monitoring
+      // 2. Active Online Users Listener
       roomRef.child('users').off();
       roomRef.child('users').on('value', (snapshot) => {
         usersContainer.innerHTML = '';
         const users = snapshot.val() || {};
-        Object.values(users).forEach(user => {
+        const userList = Object.values(users);
+        userCountEl.textContent = userList.length;
+
+        userList.forEach(user => {
           const userEl = document.createElement('div');
           userEl.className = 'user-item';
-          userEl.innerHTML = `<div class="status-dot"></div><span>${user.name}</span>`;
+          const isMe = user.name === currentUsername;
+          userEl.innerHTML = `<div class="status-dot"></div><span>${escapeHTML(user.name)} ${isMe ? '(You)' : ''}</span>`;
           usersContainer.appendChild(userEl);
         });
       });
 
-      // Realtime Messages Syncing
+      // 3. Messages Sync
       messagesContainer.innerHTML = '';
       roomRef.child('messages').off();
       roomRef.child('messages').on('child_added', (snapshot) => {
-        const msg = snapshot.val();
-        renderMessage(msg);
+        renderMessage(snapshot.val());
       });
 
-      // Typing Indicator
+      // 4. Typing State Listener
       roomRef.child('typing').off();
       roomRef.child('typing').on('value', (snapshot) => {
         const typers = snapshot.val() || {};
-        const activeTypers = Object.keys(typers)
-          .filter(uid => uid !== currentUser.uid && typers[uid] === true);
+        const activeTypers = Object.keys(typers).filter(id => id !== myClientId && typers[id] === true);
 
         if (activeTypers.length > 0) {
           typingIndicator.textContent = `တစ်ယောက်ယောက် စာရိုက်နေပါသည်။...`;
@@ -509,9 +264,8 @@
       });
     }
 
-    // 5. MESSAGE RENDERING
     function renderMessage(msg) {
-      const isMine = msg.uid === currentUser.uid;
+      const isMine = msg.clientId === myClientId;
       const msgDiv = document.createElement('div');
       msgDiv.className = `message ${isMine ? 'mine' : ''}`;
 
@@ -519,7 +273,7 @@
 
       msgDiv.innerHTML = `
         <div class="msg-meta">
-          <strong>${isMine ? 'You' : msg.sender}</strong>
+          <strong>${isMine ? 'You' : escapeHTML(msg.sender)}</strong>
           <span class="msg-time">${timeStr}</span>
         </div>
         <div class="msg-text">${escapeHTML(msg.text)}</div>
@@ -529,26 +283,27 @@
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // 6. SEND MESSAGE & TYPING
+    // Send Message
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const text = messageInput.value.trim();
       if (!text) return;
 
       const messageData = {
-        uid: currentUser.uid,
-        sender: currentUser.name,
+        clientId: myClientId,
+        sender: currentUsername,
         text: text,
         timestamp: firebase.database.ServerValue.TIMESTAMP
       };
 
       db.ref(`rooms/${currentRoomId}/messages`).push(messageData);
-      db.ref(`rooms/${currentRoomId}/typing/${currentUser.uid}`).remove();
+      db.ref(`rooms/${currentRoomId}/typing/${myClientId}`).remove();
       messageInput.value = '';
     });
 
+    // Typing Event
     messageInput.addEventListener('input', () => {
-      const typingRef = db.ref(`rooms/${currentRoomId}/typing/${currentUser.uid}`);
+      const typingRef = db.ref(`rooms/${currentRoomId}/typing/${myClientId}`);
       typingRef.set(true);
 
       clearTimeout(typingTimeout);
@@ -558,7 +313,7 @@
     });
 
     function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, 
+      return (str || '').replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
       );
     }
