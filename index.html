@@ -35,6 +35,7 @@
     .user-info-group { display: flex; align-items: center; gap: 10px; overflow: hidden; }
     .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
     .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
+    .status-dot.offline { background: #94a3b8; box-shadow: none; }
 
     /* Chat Area */
     .chat-area { flex: 1; display: flex; flex-direction: column; position: absolute; top:0; left:0; width:100%; height:100%; background: #1e293b; z-index: 1; transition: transform 0.3s ease; }
@@ -53,6 +54,7 @@
 
     .header-right-group { display: flex; align-items: center; gap: 12px; }
     .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
+    .online-badge.offline { color: #94a3b8; }
     .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
     .chat-menu-btn:hover { color: #f8fafc; background: #334155; }
 
@@ -261,7 +263,7 @@
         <div class="target-title" id="target-username">ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ</div>
         
         <div class="header-right-group">
-          <span class="online-badge">● online</span>
+          <span class="online-badge" id="online-status-badge">● online</span>
           <button class="chat-menu-btn" id="chat-menu-btn" title="Options">☰</button>
         </div>
 
@@ -369,6 +371,7 @@
     const usersContainer = document.getElementById('users-container');
     const userCountEl = document.getElementById('user-count');
     const targetUsernameEl = document.getElementById('target-username');
+    const onlineStatusBadge = document.getElementById('online-status-badge');
     const messagesContainer = document.getElementById('messages-container');
     const noChatMsg = document.getElementById('no-chat-msg');
     const inputWrapper = document.getElementById('input-wrapper');
@@ -481,33 +484,62 @@
       }
     });
 
+    // PRESENCE SYSTEM WITH 5-MIN GRACE PERIOD LOGIC
     function initGlobalPresence() {
       const globalPresenceRef = db.ref(`global_online_users/${myClientId}`);
+      const connectedRef = db.ref('.info/connected');
 
-      globalPresenceRef.set({
-        id: myClientId,
-        name: currentUsername,
-        online: true
+      connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
+          globalPresenceRef.set({
+            id: myClientId,
+            name: currentUsername,
+            online: true,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+          });
+
+          // Disconnect ဖြစ်သွားချိန် (Page ပိတ်လိုက်ချိန်) တွင် online: false နှင့် lastSeen timestamp တင်ခဲ့မည်
+          globalPresenceRef.onDisconnect().set({
+            id: myClientId,
+            name: currentUsername,
+            online: false,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
       });
-      globalPresenceRef.onDisconnect().remove();
 
       db.ref('global_online_users').on('value', (snapshot) => {
         const usersObj = snapshot.val() || {};
         latestUsersList = Object.values(usersObj);
         renderUsersUI();
       });
+
+      // မိနစ်အလိုက် Status ပြောင်းလဲမှုကို 30 စက္ကန့်တိုင်း အလိုအလျောက် Update လုပ်ရန်
+      setInterval(() => {
+        renderUsersUI();
+      }, 30000);
     }
 
-    // Block Button ကို ဖြုတ်ထားသည့် Online Users List UI Render Function
+    // ၅ မိနစ် Grace Period အတွက် ပြင်ဆင်ထားသော UI Render Function
     function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
+      const GRACE_PERIOD_MS = 5 * 60 * 1000; // 5 mins in milliseconds
+      const now = Date.now();
 
       latestUsersList.forEach(user => {
         if (user.id === myClientId) return; 
 
         const cleanName = (user.name || '').trim();
         if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
+
+        // Grace Period တွက်ချက်ခြင်း Logic
+        const isActuallyOnline = user.online === true;
+        const timeDiff = now - (user.lastSeen || 0);
+        const isWithinGracePeriod = !isActuallyOnline && (timeDiff <= GRACE_PERIOD_MS);
+
+        // ထွက်သွားပြီး ၅ မိနစ်ထက်ကျော်သွားပါက မပြတော့ပါ
+        if (!isActuallyOnline && !isWithinGracePeriod) return;
 
         visibleCount++;
 
@@ -518,7 +550,7 @@
         
         userEl.innerHTML = `
           <div class="user-info-group">
-            <div class="status-dot"></div>
+            <div class="status-dot ${isActuallyOnline ? '' : 'offline'}"></div>
             <span class="user-name">${escapeHTML(displayName)}</span>
           </div>
         `;
@@ -531,12 +563,46 @@
       });
 
       userCountEl.textContent = visibleCount;
+      
+      // လက်ရှိ ရွေးထားသော စာပို့နေသူ၏ Header Status ကိုလည်း Update လုပ်မည်
+      if (selectedTargetUser) {
+        updateHeaderOnlineStatus();
+      }
+    }
+
+    function updateHeaderOnlineStatus() {
+      if (!selectedTargetUser) return;
+
+      const liveUser = latestUsersList.find(u => u.id === selectedTargetUser.id);
+      const now = Date.now();
+      const GRACE_PERIOD_MS = 5 * 60 * 1000;
+
+      if (liveUser && liveUser.online) {
+        onlineStatusBadge.textContent = "● online";
+        onlineStatusBadge.className = "online-badge";
+      } else if (liveUser && liveUser.lastSeen) {
+        const diffMs = now - liveUser.lastSeen;
+        if (diffMs <= GRACE_PERIOD_MS) {
+          const minsAgo = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+          onlineStatusBadge.textContent = `● Active ${minsAgo} min ago`;
+          onlineStatusBadge.className = "online-badge offline";
+        } else {
+          onlineStatusBadge.textContent = "● offline";
+          onlineStatusBadge.className = "online-badge offline";
+        }
+      } else {
+        onlineStatusBadge.textContent = "● offline";
+        onlineStatusBadge.className = "online-badge offline";
+      }
     }
 
     function selectUserToChat(targetUser) {
       selectedTargetUser = targetUser;
       const displayName = nicknames[targetUser.id] || targetUser.name;
       targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
+      
+      updateHeaderOnlineStatus();
+
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
       noChatMsg.classList.add('hidden');
@@ -559,7 +625,6 @@
           Object.keys(data).forEach(key => {
             const msg = data[key];
             
-            // တစ်ဖက်လူက Chat Room ကို ကြည့်ရှုနေချိန်တွင်မှ Read Status ကို true သို့ အလိုအလျောက်ပြောင်းပေးမည်
             if (msg.senderId !== myClientId && !msg.isRead) {
               db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
             }
@@ -571,7 +636,7 @@
       });
     }
 
-    // Read/Sent Status Logic ပြင်ဆင်ထားသော Function
+    // Read/Sent Status Logic
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
@@ -579,9 +644,6 @@
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // အမှန်ခြစ် Logic:
-      // တစ်ဖက်လူ မကြည့်ရသေးပါက (isRead: false) -> အမှန်ခြစ် ၁ ခု (✓)
-      // တစ်ဖက်လူ ကြည့်ပြီးပါက (isRead: true) -> အမှန်ခြစ် ၂ ခု (✓✓)
       let statusHTML = '';
       if (isMine) {
         if (msg.isRead) {
