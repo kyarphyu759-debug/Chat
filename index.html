@@ -739,29 +739,54 @@
       document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
       listenDirectMessages();
     }
+let messagesRef = null;
 
-    function listenDirectMessages() {
-      messagesContainer.innerHTML = '';
-      if (!activeChatRoomId) return;
+function listenDirectMessages() {
+  messagesContainer.innerHTML = '';
+  if (!activeChatRoomId) return;
 
-      db.ref(`direct_messages/${activeChatRoomId}`).off();
-      db.ref(`direct_messages/${activeChatRoomId}`).on('value', (snapshot) => {
-        messagesContainer.innerHTML = '';
-        const data = snapshot.val();
-        if (data) {
-          Object.keys(data).forEach(key => {
-            const msg = data[key];
-            
-            if (msg.senderId !== myClientId && !msg.isRead) {
-              db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
-            }
+  // ယခင်ဖွင့်ထားခဲ့သော Listener များကို အရင် ပိတ်ပါ
+  if (messagesRef) {
+    messagesRef.off();
+  }
 
-            renderMessage(key, msg);
-          });
-        }
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      });
+  messagesRef = db.ref(`direct_messages/${activeChatRoomId}`);
+
+  // ၁။ စာအသစ် တစ်ကြောင်းချင်းစီ ဝင်လာမှသာ Render လုပ်မည်
+  messagesRef.on('child_added', (snapshot) => {
+    const key = snapshot.key;
+    const msg = snapshot.val();
+
+    // စာလက်ခံရရှိသူဖြစ်ပြီး မဖတ်ရသေးပါက Read status ကို update လုပ်မည်
+    if (msg.senderId !== myClientId && !msg.isRead) {
+      db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
     }
+
+    renderMessage(key, msg);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  });
+
+  // ၂။ စာပြင်ခြင်း (Edit) သို့မဟုတ် ဖတ်ပြီးကြောင်း (Read status) ပြောင်းပါက UI တွင် Update လုပ်မည်
+  messagesRef.on('child_changed', (snapshot) => {
+    const key = snapshot.key;
+    const msg = snapshot.val();
+    
+    // UI ထဲက သက်ဆိုင်ရာ message element ကို ရှာပြီး ပြင်ပေးရန် (သို့မဟုတ် listenDirectMessages ကို သန့်ရှင်းစွာ ထိန်းကျောင်းရန်)
+    const existingMsgEl = document.getElementById(`msg-${key}`);
+    if (existingMsgEl) {
+      // Message status သို့မဟုတ် ပြင်ဆင်ထားသော စာသားကို Update လုပ်နိုင်သည်
+    }
+  });
+
+  // ၃။ စာဖျက်လိုက်ပါက UI မှ ဖျက်မည်
+  messagesRef.on('child_removed', (snapshot) => {
+    const key = snapshot.key;
+    const existingMsgEl = document.getElementById(`msg-${key}`);
+    if (existingMsgEl) {
+      existingMsgEl.remove();
+    }
+  });
+}
 
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
