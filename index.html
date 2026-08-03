@@ -55,13 +55,11 @@
 
     .target-title { font-size: 0.95rem; font-weight: bold; color: #f8fafc; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* Online status & Menu Trigger */
     .header-right-group { display: flex; align-items: center; gap: 12px; }
     .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
     .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
     .chat-menu-btn:hover { color: #f8fafc; background: #334155; }
 
-    /* Chat Options Dropdown Menu */
     .chat-dropdown-menu {
       position: absolute;
       top: 100%;
@@ -120,6 +118,30 @@
       line-height: 1.3;
     }
 
+    /* Message Reaction Badge Style */
+    .reactions-badge-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 4px;
+    }
+    .reaction-badge {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid #475569;
+      border-radius: 12px;
+      padding: 1px 6px;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .reaction-badge.my-reaction {
+      border-color: #38bdf8;
+      background: rgba(30, 58, 138, 0.8);
+    }
+
     .reply-quote {
       background: rgba(0, 0, 0, 0.2);
       border-left: 3px solid #38bdf8;
@@ -154,18 +176,36 @@
 
     .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
 
-    /* Context Menu */
+    /* Context Menu & Reactions Bar */
     .context-menu {
       position: fixed;
       background: #0f172a;
       border: 1px solid #334155;
-      border-radius: 8px;
+      border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       z-index: 2000;
       display: flex;
       flex-direction: column;
-      min-width: 130px;
+      min-width: 150px;
       overflow: hidden;
+    }
+    .reaction-picker {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+    }
+    .reaction-picker span {
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      padding: 2px 4px;
+      border-radius: 50%;
+    }
+    .reaction-picker span:hover {
+      transform: scale(1.3);
+      background: #334155;
     }
     .context-menu button {
       background: none;
@@ -225,7 +265,6 @@
           <button class="chat-menu-btn" id="chat-menu-btn" title="Options">☰</button>
         </div>
 
-        <!-- Dropdown Menu for Header -->
         <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
           <button id="menu-set-nickname">✏️ Set nickname</button>
           <button id="menu-change-bg">🎨 Change background</button>
@@ -249,8 +288,16 @@
     </div>
   </div>
 
-  <!-- Context Menu for Message Actions -->
+  <!-- Context Menu with Reaction Options -->
   <div id="context-menu" class="context-menu hidden">
+    <div class="reaction-picker" id="reaction-picker">
+      <span data-emoji="❤️">❤️</span>
+      <span data-emoji="😆">😆</span>
+      <span data-emoji="😮">😮</span>
+      <span data-emoji="😢">😢</span>
+      <span data-emoji="👍">👍</span>
+      <span data-emoji="🙏">🙏</span>
+    </div>
     <button id="ctx-reply-btn">↩️ Reply</button>
     <button id="ctx-edit-btn">✏️ Edit</button>
     <button id="ctx-delete-btn" class="danger">🗑️ Delete</button>
@@ -345,6 +392,7 @@
     const cancelReplyBtn = document.getElementById('cancel-reply-btn');
 
     const contextMenu = document.getElementById('context-menu');
+    const reactionPicker = document.getElementById('reaction-picker');
     const ctxReplyBtn = document.getElementById('ctx-reply-btn');
     const ctxEditBtn = document.getElementById('ctx-edit-btn');
     const ctxDeleteBtn = document.getElementById('ctx-delete-btn');
@@ -355,7 +403,6 @@
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const modalUsernameInput = document.getElementById('modal-username-input');
 
-    // Chat Header Menu Elements
     const chatMenuBtn = document.getElementById('chat-menu-btn');
     const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
     const menuSetNickname = document.getElementById('menu-set-nickname');
@@ -388,13 +435,11 @@
       chatArea.classList.remove('active-mobile');
     });
 
-    // HEADER DROPDOWN MENU TOGGLE
     chatMenuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       chatDropdownMenu.classList.toggle('hidden');
     });
 
-    // SET NICKNAME LOGIC
     menuSetNickname.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
       if (!selectedTargetUser) {
@@ -413,14 +458,12 @@
         }
         localStorage.setItem('chatsphere_nicknames', JSON.stringify(nicknames));
         
-        // Update Title and UI
         const displayName = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
         targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
         renderUsersUI();
       }
     });
 
-    // CHANGE BACKGROUND LOGIC
     menuChangeBg.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
       const bgInput = prompt("Background အတွက် Color Code (ဥပမာ #0f172a) သို့မဟုတ် Image URL ထည့်ပါ:\n(မူလအတိုင်းပြန်ထားချင်ရင် အလွတ်ထားခဲ့ပါ)");
@@ -442,14 +485,12 @@
       }
     });
 
-    // Close Dropdown when clicked outside
     document.addEventListener('click', (e) => {
       if (!chatDropdownMenu.contains(e.target) && e.target !== chatMenuBtn) {
         chatDropdownMenu.classList.add('hidden');
       }
     });
 
-    // GLOBAL ONLINE PRESENCE SYSTEM
     function initGlobalPresence() {
       const globalPresenceRef = db.ref(`global_online_users/${myClientId}`);
 
@@ -511,7 +552,6 @@
       userCountEl.textContent = visibleCount;
     }
 
-    // BLOCK LOGIC
     function blockUser(userId) {
       if (confirm("ဤ User ကို Block ရန် သေချာပါသလား? Online List မှ ပျောက်သွားပြီး စာလည်း ပို့နိုင်တော့မည် မဟုတ်ပါ။")) {
         if (!Array.isArray(blockedUserIds)) blockedUserIds = [];
@@ -550,7 +590,6 @@
       listenDirectMessages();
     }
 
-    // LISTEN DIRECT MESSAGES
     function listenDirectMessages() {
       messagesContainer.innerHTML = '';
       if (!activeChatRoomId) return;
@@ -568,7 +607,7 @@
       });
     }
 
-    // RENDER MESSAGES WITH LONG PRESS
+    // RENDER MESSAGE WITH REACTIONS SUPPORT
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
@@ -586,6 +625,25 @@
         `;
       }
 
+      // Process Reactions
+      let reactionsHTML = '';
+      if (msg.reactions) {
+        const counts = {};
+        let myReaction = null;
+
+        Object.entries(msg.reactions).forEach(([uId, emoji]) => {
+          counts[emoji] = (counts[emoji] || 0) + 1;
+          if (uId === myClientId) myReaction = emoji;
+        });
+
+        const badges = Object.entries(counts).map(([emoji, count]) => {
+          const isMyBadge = myReaction === emoji;
+          return `<span class="reaction-badge ${isMyBadge ? 'my-reaction' : ''}">${emoji} ${count > 1 ? count : ''}</span>`;
+        }).join('');
+
+        reactionsHTML = `<div class="reactions-badge-container">${badges}</div>`;
+      }
+
       msgDiv.innerHTML = `
         <div class="msg-meta">
           <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
@@ -593,6 +651,7 @@
         </div>
         ${replyHTML}
         <div class="msg-text" dir="ltr">${escapeHTML(msg.text)}</div>
+        ${reactionsHTML}
       `;
 
       let pressTimer;
@@ -625,7 +684,7 @@
       messagesContainer.appendChild(msgDiv);
     }
 
-    // SHOW CONTEXT MENU (DELETE, REPLY, EDIT)
+    // SHOW CONTEXT MENU (DELETE, REPLY, EDIT, REACT)
     function showContextMenu(e, key, msg, isMine) {
       selectedMsgKey = key;
       selectedMsgData = msg;
@@ -633,6 +692,10 @@
       const touch = e.touches ? e.touches[0] : e;
       let x = touch.clientX;
       let y = touch.clientY;
+
+      // Menu Screen Edge Collision Check
+      if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
+      if (y + 180 > window.innerHeight) y = window.innerHeight - 190;
 
       if (isMine) {
         ctxEditBtn.classList.remove('hidden');
@@ -644,6 +707,26 @@
       contextMenu.style.left = `${x}px`;
       contextMenu.classList.remove('hidden');
     }
+
+    // HANDLE REACTION PICKER CLICK
+    reactionPicker.addEventListener('click', (e) => {
+      const emoji = e.target.getAttribute('data-emoji');
+      if (!emoji || !selectedMsgKey || !activeChatRoomId) return;
+
+      const userReactionRef = db.ref(`direct_messages/${activeChatRoomId}/${selectedMsgKey}/reactions/${myClientId}`);
+      
+      userReactionRef.get().then((snapshot) => {
+        if (snapshot.exists() && snapshot.val() === emoji) {
+          // Toggle off if same emoji clicked again
+          userReactionRef.remove();
+        } else {
+          // Add or change reaction
+          userReactionRef.set(emoji);
+        }
+      });
+
+      contextMenu.classList.add('hidden');
+    });
 
     document.addEventListener('click', (e) => {
       if (!contextMenu.contains(e.target)) {
