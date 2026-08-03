@@ -36,10 +36,6 @@
     .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
     .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
 
-    .user-actions { display: flex; gap: 4px; flex-shrink: 0; }
-    .action-btn { background: #334155; border: none; color: #94a3b8; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
-    .action-btn.block-btn:hover { background: #eab308; color: #000; }
-
     /* Chat Area */
     .chat-area { flex: 1; display: flex; flex-direction: column; position: absolute; top:0; left:0; width:100%; height:100%; background: #1e293b; z-index: 1; transition: transform 0.3s ease; }
     
@@ -360,16 +356,6 @@
       }
     }
 
-    function getStoredArray(key) {
-      try {
-        const data = JSON.parse(localStorage.getItem(key));
-        return Array.isArray(data) ? data : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    let blockedUserIds = getStoredArray('chatsphere_blocked_users');
     let nicknames = getStoredObject('chatsphere_nicknames');
     let latestUsersList = [];
 
@@ -512,12 +498,13 @@
       });
     }
 
+    // Block Button ကို ဖြုတ်ထားသည့် Online Users List UI Render Function
     function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
 
       latestUsersList.forEach(user => {
-        if (user.id === myClientId || blockedUserIds.includes(user.id)) return; 
+        if (user.id === myClientId) return; 
 
         const cleanName = (user.name || '').trim();
         if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
@@ -534,50 +521,16 @@
             <div class="status-dot"></div>
             <span class="user-name">${escapeHTML(displayName)}</span>
           </div>
-          <div class="user-actions">
-            <button class="action-btn block-btn" title="Block User">🚫 Block</button>
-          </div>
         `;
         
-        userEl.addEventListener('click', (e) => {
-          if (e.target.classList.contains('action-btn')) return;
+        userEl.addEventListener('click', () => {
           selectUserToChat(user);
-        });
-
-        const blockBtn = userEl.querySelector('.block-btn');
-        blockBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          blockUser(user.id);
         });
 
         usersContainer.appendChild(userEl);
       });
 
       userCountEl.textContent = visibleCount;
-    }
-
-    function blockUser(userId) {
-      if (confirm("ဤ User ကို Block ရန် သေချာပါသလား? Online List မှ ပျောက်သွားပြီး စာလည်း ပို့နိုင်တော့မည် မဟုတ်ပါ။")) {
-        if (!Array.isArray(blockedUserIds)) blockedUserIds = [];
-
-        if (!blockedUserIds.includes(userId)) {
-          blockedUserIds.push(userId);
-          localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUserIds));
-        }
-
-        if (selectedTargetUser && selectedTargetUser.id === userId) {
-          selectedTargetUser = null;
-          activeChatRoomId = null;
-          targetUsernameEl.textContent = 'ကျေးဇူးပြု၍ စာပို့ချင်သည့် User ကို ရွေးချယ်ပါ';
-          noChatMsg.classList.remove('hidden');
-          inputWrapper.classList.add('hidden');
-          messagesContainer.innerHTML = '';
-          messagesContainer.appendChild(noChatMsg);
-          chatArea.classList.remove('active-mobile');
-        }
-
-        renderUsersUI();
-      }
     }
 
     function selectUserToChat(targetUser) {
@@ -606,7 +559,7 @@
           Object.keys(data).forEach(key => {
             const msg = data[key];
             
-            // Auto mark message as read if it is from the other person
+            // တစ်ဖက်လူက Chat Room ကို ကြည့်ရှုနေချိန်တွင်မှ Read Status ကို true သို့ အလိုအလျောက်ပြောင်းပေးမည်
             if (msg.senderId !== myClientId && !msg.isRead) {
               db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
             }
@@ -618,7 +571,7 @@
       });
     }
 
-    // RENDER MESSAGE WITH READ/SENT STATUS & REACTIONS
+    // Read/Sent Status Logic ပြင်ဆင်ထားသော Function
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
@@ -626,7 +579,9 @@
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // Read/Sent Status Checkmarks
+      // အမှန်ခြစ် Logic:
+      // တစ်ဖက်လူ မကြည့်ရသေးပါက (isRead: false) -> အမှန်ခြစ် ၁ ခု (✓)
+      // တစ်ဖက်လူ ကြည့်ပြီးပါက (isRead: true) -> အမှန်ခြစ် ၂ ခု (✓✓)
       let statusHTML = '';
       if (isMine) {
         if (msg.isRead) {
