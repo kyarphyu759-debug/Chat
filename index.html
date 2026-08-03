@@ -108,8 +108,13 @@
     .message.mine { background: #2563eb; align-self: flex-end; }
     
     .msg-meta { font-size: 0.7rem; color: #cbd5e1; margin-bottom: 0.2rem; display: flex; justify-content: space-between; gap: 0.8rem; }
-    .msg-time { opacity: 0.75; }
+    .msg-time { opacity: 0.75; display: flex; align-items: center; gap: 3px; }
     
+    /* Message Status Checkmarks */
+    .read-status { font-weight: bold; font-size: 0.8rem; }
+    .read-status.sent { color: #94a3b8; }
+    .read-status.read { color: #38bdf8; }
+
     .msg-text {
       direction: ltr !important;
       unicode-bidi: isolate !important;
@@ -118,7 +123,6 @@
       line-height: 1.3;
     }
 
-    /* Message Reaction Badge Style */
     .reactions-badge-container {
       display: flex;
       flex-wrap: wrap;
@@ -600,20 +604,37 @@
         const data = snapshot.val();
         if (data) {
           Object.keys(data).forEach(key => {
-            renderMessage(key, data[key]);
+            const msg = data[key];
+            
+            // Auto mark message as read if it is from the other person
+            if (msg.senderId !== myClientId && !msg.isRead) {
+              db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
+            }
+
+            renderMessage(key, msg);
           });
         }
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
     }
 
-    // RENDER MESSAGE WITH REACTIONS SUPPORT
+    // RENDER MESSAGE WITH READ/SENT STATUS & REACTIONS
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
       msgDiv.className = `message ${isMine ? 'mine' : ''}`;
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Read/Sent Status Checkmarks
+      let statusHTML = '';
+      if (isMine) {
+        if (msg.isRead) {
+          statusHTML = `<span class="read-status read" title="Read">✓✓</span>`;
+        } else {
+          statusHTML = `<span class="read-status sent" title="Sent">✓</span>`;
+        }
+      }
 
       let replyHTML = '';
       if (msg.replyTo) {
@@ -647,7 +668,9 @@
       msgDiv.innerHTML = `
         <div class="msg-meta">
           <strong>${isMine ? 'You' : escapeHTML(msg.senderName)}</strong>
-          <span class="msg-time">${timeStr} ${msg.isEdited ? '(edited)' : ''}</span>
+          <span class="msg-time">
+            ${timeStr} ${msg.isEdited ? '(edited)' : ''} ${statusHTML}
+          </span>
         </div>
         ${replyHTML}
         <div class="msg-text" dir="ltr">${escapeHTML(msg.text)}</div>
@@ -693,7 +716,6 @@
       let x = touch.clientX;
       let y = touch.clientY;
 
-      // Menu Screen Edge Collision Check
       if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
       if (y + 180 > window.innerHeight) y = window.innerHeight - 190;
 
@@ -717,10 +739,8 @@
       
       userReactionRef.get().then((snapshot) => {
         if (snapshot.exists() && snapshot.val() === emoji) {
-          // Toggle off if same emoji clicked again
           userReactionRef.remove();
         } else {
-          // Add or change reaction
           userReactionRef.set(emoji);
         }
       });
@@ -780,7 +800,8 @@
         senderId: myClientId,
         senderName: currentUsername,
         text: text,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        isRead: false
       };
 
       if (activeReplyData) {
