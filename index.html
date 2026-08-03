@@ -2,43 +2,123 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Cross-mobile viewport with user-scalable disabled to prevent unwanted zoom on double-tap -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ChatSphere - Real-time Direct Messenger</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    }
+
+    /* Support Dynamic Viewport Height for Mobile Browsers (iOS Safari / Android Chrome) */
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #0f172a; 
+      color: #f8fafc; 
+      -webkit-tap-highlight-color: transparent; 
+    }
+
+    body {
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+    }
+
     .hidden { display: none !important; }
 
-    #chat-app { display: flex; width: 100vw; height: 100vh; max-width: 1100px; background: #1e293b; overflow: hidden; position: relative; }
+    #chat-app { 
+      display: flex; 
+      width: 100vw; 
+      height: 100dvh; 
+      max-width: 1100px; 
+      background: #1e293b; 
+      overflow: hidden; 
+      position: relative; 
+    }
 
     @media (min-width: 768px) {
-      #chat-app { height: 85vh; width: 90vw; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+      #chat-app { 
+        height: 85vh; 
+        width: 90vw; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+      }
     }
 
     /* Sidebar */
-    .sidebar { width: 100%; background: #0f172a; padding: 1rem; border-right: 1px solid #334155; display: flex; flex-direction: column; z-index: 2; height: 100%; }
+    .sidebar { 
+      width: 100%; 
+      background: #0f172a; 
+      padding: 1rem; 
+      padding-top: calc(1rem + env(safe-area-inset-top));
+      border-right: 1px solid #334155; 
+      display: flex; 
+      flex-direction: column; 
+      z-index: 2; 
+      height: 100%; 
+    }
     @media (min-width: 768px) {
-      .sidebar { width: 320px; }
+      .sidebar { width: 320px; padding-top: 1rem; }
     }
     
-    .my-profile-info { background: #1e293b; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+    .my-profile-info { 
+      background: #1e293b; 
+      padding: 0.8rem 1rem; 
+      border-radius: 8px; 
+      margin-bottom: 1rem; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border: 1px solid #334155; 
+    }
     .my-profile-info h4 { color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .my-profile-info p { color: #38bdf8; font-weight: bold; font-size: 1rem; }
 
-    .users-list { flex: 1; overflow-y: auto; }
+    .users-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .users-list h3 { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
     
-    .user-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; background: #1e293b; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+    .user-item { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      margin-bottom: 0.5rem; 
+      font-size: 0.95rem; 
+      background: #1e293b; 
+      padding: 10px 14px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      transition: 0.2s; 
+      border: 1px solid transparent; 
+      touch-action: manipulation;
+    }
     .user-item:hover { background: #334155; }
     .user-item.active { background: #1e3a8a; border-color: #38bdf8; }
     
     .user-info-group { display: flex; align-items: center; gap: 10px; overflow: hidden; }
     .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
-    .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
+    .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
     .status-dot.offline { background: #94a3b8; box-shadow: none; }
 
     /* Chat Area */
-    .chat-area { flex: 1; display: flex; flex-direction: column; position: absolute; top:0; left:0; width:100%; height:100%; background: #1e293b; z-index: 1; transition: transform 0.3s ease; }
+    .chat-area { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: #1e293b; 
+      z-index: 1; 
+      transition: transform 0.3s ease; 
+    }
     
     @media (min-width: 768px) {
       .chat-area { position: relative; width: auto; z-index: 1; }
@@ -46,8 +126,17 @@
 
     .chat-area.active-mobile { z-index: 3; }
 
-    .chat-header { padding: 0.8rem 1rem; background: #0f172a; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; position: relative; }
-    .back-btn { background: none; border: none; color: #38bdf8; font-size: 1.2rem; cursor: pointer; display: block; padding: 0 5px; }
+    .chat-header { 
+      padding: 0.8rem 1rem; 
+      padding-top: calc(0.8rem + env(safe-area-inset-top));
+      background: #0f172a; 
+      border-bottom: 1px solid #334155; 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+      position: relative; 
+    }
+    .back-btn { background: none; border: none; color: #38bdf8; font-size: 1.3rem; cursor: pointer; display: block; padding: 0 5px; touch-action: manipulation; }
     @media (min-width: 768px) { .back-btn { display: none; } }
 
     .target-title { font-size: 0.95rem; font-weight: bold; color: #f8fafc; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -55,7 +144,7 @@
     .header-right-group { display: flex; align-items: center; gap: 12px; }
     .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
     .online-badge.offline { color: #94a3b8; }
-    .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+    .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; touch-action: manipulation; }
     .chat-menu-btn:hover { color: #f8fafc; background: #334155; }
 
     .chat-dropdown-menu {
@@ -76,36 +165,50 @@
       background: none;
       border: none;
       color: #f8fafc;
-      padding: 10px 14px;
+      padding: 12px 14px;
       text-align: left;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 10px;
+      touch-action: manipulation;
     }
     .chat-dropdown-menu button:hover { background: #334155; }
 
-    .messages-container { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; background: #1e293b; background-size: cover; background-position: center; }
+    .messages-container { 
+      flex: 1; 
+      padding: 1rem; 
+      overflow-y: auto; 
+      -webkit-overflow-scrolling: touch;
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.75rem; 
+      background: #1e293b; 
+      background-size: cover; 
+      background-position: center; 
+    }
     
     .message { 
-      max-width: 80%; 
-      padding: 0.6rem 0.9rem; 
-      border-radius: 12px; 
+      max-width: 85%; 
+      padding: 0.65rem 0.95rem; 
+      border-radius: 14px; 
       background: #334155; 
       align-self: flex-start; 
       word-wrap: break-word; 
       direction: ltr !important; 
       text-align: left !important;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       user-select: none;
+      -webkit-user-select: none;
       cursor: pointer;
       position: relative;
+      touch-action: manipulation;
     }
     @media (min-width: 768px) { .message { max-width: 65%; } }
     .message.mine { background: #2563eb; align-self: flex-end; }
     
-    .msg-meta { font-size: 0.7rem; color: #cbd5e1; margin-bottom: 0.2rem; display: flex; justify-content: space-between; gap: 0.8rem; }
+    .msg-meta { font-size: 0.72rem; color: #cbd5e1; margin-bottom: 0.2rem; display: flex; justify-content: space-between; gap: 0.8rem; }
     .msg-time { opacity: 0.75; display: flex; align-items: center; gap: 3px; }
     
     /* Message Status Checkmarks */
@@ -118,7 +221,7 @@
       unicode-bidi: isolate !important;
       text-align: left !important;
       white-space: pre-wrap;
-      line-height: 1.3;
+      line-height: 1.35;
     }
 
     .reactions-badge-container {
@@ -131,7 +234,7 @@
       background: rgba(15, 23, 42, 0.7);
       border: 1px solid #475569;
       border-radius: 12px;
-      padding: 1px 6px;
+      padding: 2px 7px;
       font-size: 0.75rem;
       display: inline-flex;
       align-items: center;
@@ -155,11 +258,18 @@
     }
     .reply-quote strong { color: #38bdf8; display: block; font-size: 0.7rem; }
 
-    .input-wrapper { background: #0f172a; border-top: 1px solid #334155; display: flex; flex-direction: column; }
+    /* Input wrapper with iOS Bottom Safe Area spacing */
+    .input-wrapper { 
+      background: #0f172a; 
+      border-top: 1px solid #334155; 
+      display: flex; 
+      flex-direction: column; 
+      padding-bottom: env(safe-area-inset-bottom);
+    }
     
     .reply-preview-bar {
       background: #1e293b;
-      padding: 6px 1rem;
+      padding: 8px 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -167,14 +277,33 @@
       font-size: 0.8rem;
     }
     .reply-preview-content { color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
-    .close-reply-btn { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    .close-reply-btn { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; }
 
-    .input-area { padding: 0.75rem 1rem; display: flex; gap: 8px; }
-    input { flex: 1; padding: 0.65rem 0.8rem; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #fff; font-size: 0.9rem; outline: none; }
+    .input-area { padding: 0.75rem 1rem; display: flex; gap: 8px; align-items: center; }
+    input { 
+      flex: 1; 
+      padding: 0.75rem 0.9rem; 
+      border: 1px solid #334155; 
+      border-radius: 8px; 
+      background: #1e293b; 
+      color: #fff; 
+      font-size: 16px; /* 16px prevents iOS Auto-Zoom on Focus */
+      outline: none; 
+    }
     input:focus { border-color: #38bdf8; }
-    button.send-btn { padding: 0.65rem 1.2rem; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    button.send-btn { 
+      padding: 0.75rem 1.2rem; 
+      background: #2563eb; 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: bold; 
+      font-size: 0.95rem;
+      cursor: pointer; 
+      touch-action: manipulation;
+    }
     
-    .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+    .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.4rem 0.7rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; touch-action: manipulation; }
 
     .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
 
@@ -188,22 +317,23 @@
       z-index: 2000;
       display: flex;
       flex-direction: column;
-      min-width: 150px;
+      min-width: 160px;
       overflow: hidden;
     }
     .reaction-picker {
       display: flex;
       justify-content: space-around;
-      padding: 8px;
+      padding: 10px 6px;
       background: #1e293b;
       border-bottom: 1px solid #334155;
     }
     .reaction-picker span {
-      font-size: 1.25rem;
+      font-size: 1.35rem;
       cursor: pointer;
       transition: transform 0.15s ease;
-      padding: 2px 4px;
+      padding: 2px 5px;
       border-radius: 50%;
+      touch-action: manipulation;
     }
     .reaction-picker span:hover {
       transform: scale(1.3);
@@ -213,25 +343,26 @@
       background: none;
       border: none;
       color: #f8fafc;
-      padding: 10px 14px;
+      padding: 12px 14px;
       text-align: left;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      touch-action: manipulation;
     }
     .context-menu button:hover { background: #334155; }
     .context-menu button.danger { color: #ef4444; }
 
     /* Modal */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal-card { background: #1e293b; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 380px; }
     .modal-card h3 { color: #38bdf8; margin-bottom: 0.8rem; font-size: 1.1rem; }
     .modal-card label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
     .modal-card input { margin-bottom: 1rem; width: 100%; }
     .modal-actions { display: flex; gap: 8px; }
-    .cancel-btn { background: #475569; border: none; color: white; padding: 0.6rem; border-radius: 6px; cursor: pointer; }
+    .cancel-btn { background: #475569; border: none; color: white; padding: 0.65rem; border-radius: 6px; cursor: pointer; flex: 1; }
   </style>
 </head>
 <body>
@@ -498,7 +629,6 @@
             lastSeen: firebase.database.ServerValue.TIMESTAMP
           });
 
-          // Disconnect ဖြစ်သွားချိန် (Page ပိတ်လိုက်ချိန်) တွင် online: false နှင့် lastSeen timestamp တင်ခဲ့မည်
           globalPresenceRef.onDisconnect().set({
             id: myClientId,
             name: currentUsername,
@@ -514,17 +644,17 @@
         renderUsersUI();
       });
 
-      // မိနစ်အလိုက် Status ပြောင်းလဲမှုကို 30 စက္ကန့်တိုင်း အလိုအလျောက် Update လုပ်ရန်
+      // Refresh every 30 seconds
       setInterval(() => {
         renderUsersUI();
       }, 30000);
     }
 
-    // ၅ မိနစ် Grace Period အတွက် ပြင်ဆင်ထားသော UI Render Function
+    // Render Users List Logic
     function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
-      const GRACE_PERIOD_MS = 5 * 60 * 1000; // 5 mins in milliseconds
+      const GRACE_PERIOD_MS = 5 * 60 * 1000; 
       const now = Date.now();
 
       latestUsersList.forEach(user => {
@@ -533,12 +663,10 @@
         const cleanName = (user.name || '').trim();
         if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
 
-        // Grace Period တွက်ချက်ခြင်း Logic
         const isActuallyOnline = user.online === true;
         const timeDiff = now - (user.lastSeen || 0);
         const isWithinGracePeriod = !isActuallyOnline && (timeDiff <= GRACE_PERIOD_MS);
 
-        // ထွက်သွားပြီး ၅ မိနစ်ထက်ကျော်သွားပါက မပြတော့ပါ
         if (!isActuallyOnline && !isWithinGracePeriod) return;
 
         visibleCount++;
@@ -564,7 +692,6 @@
 
       userCountEl.textContent = visibleCount;
       
-      // လက်ရှိ ရွေးထားသော စာပို့နေသူ၏ Header Status ကိုလည်း Update လုပ်မည်
       if (selectedTargetUser) {
         updateHeaderOnlineStatus();
       }
@@ -636,7 +763,6 @@
       });
     }
 
-    // Read/Sent Status Logic
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
@@ -663,7 +789,6 @@
         `;
       }
 
-      // Process Reactions
       let reactionsHTML = '';
       if (msg.reactions) {
         const counts = {};
@@ -699,7 +824,7 @@
       const startPress = (e) => {
         pressTimer = setTimeout(() => {
           showContextMenu(e, key, msg, isMine);
-        }, 500);
+        }, 450);
       };
 
       const cancelPress = () => {
@@ -733,8 +858,11 @@
       let x = touch.clientX;
       let y = touch.clientY;
 
-      if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
-      if (y + 180 > window.innerHeight) y = window.innerHeight - 190;
+      // Adjusted boundary checks for various phone screens
+      if (x + 170 > window.innerWidth) x = window.innerWidth - 180;
+      if (y + 190 > window.innerHeight) y = window.innerHeight - 200;
+      if (x < 10) x = 10;
+      if (y < 10) y = 10;
 
       if (isMine) {
         ctxEditBtn.classList.remove('hidden');
@@ -747,7 +875,6 @@
       contextMenu.classList.remove('hidden');
     }
 
-    // HANDLE REACTION PICKER CLICK
     reactionPicker.addEventListener('click', (e) => {
       const emoji = e.target.getAttribute('data-emoji');
       if (!emoji || !selectedMsgKey || !activeChatRoomId) return;
@@ -771,7 +898,6 @@
       }
     });
 
-    // CONTEXT ACTIONS
     ctxReplyBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
       activeReplyData = {
@@ -807,7 +933,6 @@
       }
     });
 
-    // SEND DIRECT MESSAGE
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const text = messageInput.value.trim();
@@ -832,7 +957,6 @@
       replyPreviewBar.classList.add('hidden');
     });
 
-    // PROFILE MODAL LOGIC
     openProfileBtn.addEventListener('click', () => {
       modalUsernameInput.value = currentUsername;
       profileModal.classList.remove('hidden');
