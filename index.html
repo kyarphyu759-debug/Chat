@@ -2,7 +2,6 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8">
-  <!-- Cross-mobile viewport with user-scalable disabled to prevent unwanted zoom on double-tap -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ChatSphere - Real-time Direct Messenger</title>
   <style>
@@ -13,7 +12,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
     }
 
-    /* Support Dynamic Viewport Height for Mobile Browsers (iOS Safari / Android Chrome) */
     html, body {
       width: 100%;
       height: 100%;
@@ -211,7 +209,6 @@
     .msg-meta { font-size: 0.72rem; color: #cbd5e1; margin-bottom: 0.2rem; display: flex; justify-content: space-between; gap: 0.8rem; }
     .msg-time { opacity: 0.75; display: flex; align-items: center; gap: 3px; }
     
-    /* Message Status Checkmarks */
     .read-status { font-weight: bold; font-size: 0.8rem; }
     .read-status.sent { color: #94a3b8; }
     .read-status.read { color: #38bdf8; }
@@ -258,7 +255,6 @@
     }
     .reply-quote strong { color: #38bdf8; display: block; font-size: 0.7rem; }
 
-    /* Input wrapper with iOS Bottom Safe Area spacing */
     .input-wrapper { 
       background: #0f172a; 
       border-top: 1px solid #334155; 
@@ -280,17 +276,17 @@
     .close-reply-btn { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; }
 
     .input-area { padding: 0.75rem 1rem; display: flex; gap: 8px; align-items: center; }
-    input { 
+    input[type="text"] { 
       flex: 1; 
       padding: 0.75rem 0.9rem; 
       border: 1px solid #334155; 
       border-radius: 8px; 
       background: #1e293b; 
       color: #fff; 
-      font-size: 16px; /* 16px prevents iOS Auto-Zoom on Focus */
+      font-size: 16px; 
       outline: none; 
     }
-    input:focus { border-color: #38bdf8; }
+    input[type="text"]:focus { border-color: #38bdf8; }
     button.send-btn { 
       padding: 0.75rem 1.2rem; 
       background: #2563eb; 
@@ -355,14 +351,69 @@
     .context-menu button:hover { background: #334155; }
     .context-menu button.danger { color: #ef4444; }
 
-    /* Modal */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-card { background: #1e293b; padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 380px; }
-    .modal-card h3 { color: #38bdf8; margin-bottom: 0.8rem; font-size: 1.1rem; }
-    .modal-card label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
-    .modal-card input { margin-bottom: 1rem; width: 100%; }
-    .modal-actions { display: flex; gap: 8px; }
-    .cancel-btn { background: #475569; border: none; color: white; padding: 0.65rem; border-radius: 6px; cursor: pointer; flex: 1; }
+    /* Modals System */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.75); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal-card { background: #1e293b; padding: 1.5rem; border-radius: 14px; width: 90%; max-width: 400px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-card h3 { color: #38bdf8; margin-bottom: 1rem; font-size: 1.1rem; }
+    .modal-card label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.4rem; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 1.2rem; }
+    .btn-primary { flex: 1; background:#2563eb; color:white; border:none; padding:0.65rem; border-radius:8px; font-weight:600; cursor:pointer; }
+    .cancel-btn { background: #475569; border: none; color: white; padding: 0.65rem; border-radius: 8px; cursor: pointer; flex: 1; }
+
+    /* Custom Toggle Switch for Online Status */
+    .toggle-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid #334155;
+    }
+    .toggle-group label { margin-bottom: 0; cursor: pointer; }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #475569; transition: .3s; border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+      background-color: white; transition: .3s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #ef4444; }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Theme Color Circles & Upload Section */
+    .theme-circles { display: flex; gap: 12px; margin-bottom: 1.2rem; justify-content: space-between; flex-wrap: wrap; }
+    .color-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .color-circle:hover, .color-circle.selected { transform: scale(1.15); border-color: #38bdf8; }
+    
+    .upload-box {
+      border: 2px dashed #475569;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: #0f172a;
+      transition: border-color 0.2s;
+      margin-bottom: 1rem;
+    }
+    .upload-box:hover { border-color: #38bdf8; }
+    .upload-box p { font-size: 0.85rem; color: #94a3b8; }
+    .color-picker-row { display: flex; align-items: center; gap: 10px; margin-top: 0.5rem; }
+    .color-picker-row input[type="color"] { border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; background: none; }
   </style>
 </head>
 <body>
@@ -436,15 +487,74 @@
     <button id="ctx-delete-btn" class="danger">🗑️ Delete</button>
   </div>
 
-  <!-- Profile Modal -->
+  <!-- Profile Modal (With Hide Online Toggle Option) -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3>User Name ပြောင်းလဲရန်</h3>
+      <h3>Profile ပြောင်းလဲရန်</h3>
       <label>User Name</label>
       <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required />
+      
+      <!-- Hide Online Status Toggle Switch -->
+      <div class="toggle-group">
+        <div>
+          <label style="color:#f8fafc; font-weight:600;">Online Status ပိတ်မည်</label>
+          <p style="font-size:0.75rem; color:#94a3b8;">Online ပြမနေတော့ဘဲ စာပို့မှ အမှန်ခြစ်နှစ်ခုပြပါမည်</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="hide-online-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <div class="modal-actions">
-        <button type="button" id="save-profile-btn" style="flex: 1; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Save Changes</button>
+        <button type="button" id="save-profile-btn" class="btn-primary">Save Changes</button>
         <button type="button" id="close-modal-btn" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nickname Modal -->
+  <div id="nickname-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 id="nickname-modal-title">Nickname သတ်မှတ်ရန်</h3>
+      <label>ပေးလိုသော Nickname</label>
+      <input type="text" id="nickname-input" placeholder="Nickname ရိုက်ထည့်ပါ..." autocomplete="off" />
+      <div class="modal-actions">
+        <button type="button" id="save-nickname-btn" class="btn-primary">Save</button>
+        <button type="button" id="close-nickname-btn" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Customizer Modal -->
+  <div id="bg-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Background ပြောင်းလဲရန်</h3>
+      
+      <label>၁။ Theme Colors မှ ရွေးရန်</label>
+      <div class="theme-circles">
+        <div class="color-circle" style="background: #1e293b;" data-color="#1e293b" title="Default Dark"></div>
+        <div class="color-circle" style="background: #0f172a;" data-color="#0f172a" title="Midnight"></div>
+        <div class="color-circle" style="background: #000000;" data-color="#000000" title="Pure Black"></div>
+        <div class="color-circle" style="background: #1e1b4b;" data-color="#1e1b4b" title="Deep Purple"></div>
+        <div class="color-circle" style="background: #064e3b;" data-color="#064e3b" title="Forest Green"></div>
+        <div class="color-circle" style="background: #451a03;" data-color="#451a03" title="Warm Sunset"></div>
+      </div>
+
+      <label>၂။ ကိုယ်ပိုင် ဓာတ်ပုံ တင်ရန် (Upload Image)</label>
+      <div class="upload-box" onclick="document.getElementById('bg-file-input').click()">
+        <p id="upload-status-text">📁 ဓာတ်ပုံရွေးချယ်ရန် ဒီမှာ နှိပ်ပါ</p>
+        <input type="file" id="bg-file-input" accept="image/*" class="hidden" />
+      </div>
+
+      <div class="color-picker-row">
+        <label style="margin:0;">သို့မဟုတ် စိတ်ကြိုက် အရောင် ရွေးမည်:</label>
+        <input type="color" id="custom-color-picker" value="#1e293b">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="reset-bg-btn" style="background:#ef4444; color:white; border:none; padding:0.65rem; border-radius:8px; cursor:pointer;">Reset Default</button>
+        <button type="button" id="close-bg-btn" class="cancel-btn">Close</button>
       </div>
     </div>
   </div>
@@ -477,6 +587,7 @@
     }
 
     let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
+    let hideOnlineStatus = localStorage.getItem('chatsphere_hide_online') === 'true'; // Online status hide setting
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
@@ -496,6 +607,7 @@
     let selectedMsgData = null;
     let selectedMsgKey = null;
     let activeReplyData = null;
+    let messagesRef = null;
 
     // DOM Elements
     const displayMyUsername = document.getElementById('display-my-username');
@@ -521,26 +633,50 @@
     const ctxEditBtn = document.getElementById('ctx-edit-btn');
     const ctxDeleteBtn = document.getElementById('ctx-delete-btn');
 
+    // Modals DOM
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const modalUsernameInput = document.getElementById('modal-username-input');
+    const hideOnlineToggle = document.getElementById('hide-online-toggle');
+
+    const nicknameModal = document.getElementById('nickname-modal');
+    const nicknameModalTitle = document.getElementById('nickname-modal-title');
+    const nicknameInput = document.getElementById('nickname-input');
+    const saveNicknameBtn = document.getElementById('save-nickname-btn');
+    const closeNicknameBtn = document.getElementById('close-nickname-btn');
+
+    const bgModal = document.getElementById('bg-modal');
+    const closeBgBtn = document.getElementById('close-bg-btn');
+    const resetBgBtn = document.getElementById('reset-bg-btn');
+    const bgFileInput = document.getElementById('bg-file-input');
+    const uploadStatusText = document.getElementById('upload-status-text');
+    const customColorPicker = document.getElementById('custom-color-picker');
 
     const chatMenuBtn = document.getElementById('chat-menu-btn');
     const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
     const menuSetNickname = document.getElementById('menu-set-nickname');
     const menuChangeBg = document.getElementById('menu-change-bg');
 
-    // Load saved background
-    const savedBg = localStorage.getItem('chatsphere_chat_bg');
-    if (savedBg) {
-      if (savedBg.startsWith('http') || savedBg.startsWith('data:')) {
-        messagesContainer.style.backgroundImage = `url('${savedBg}')`;
+    // Apply Saved Background
+    function applySavedBackground() {
+      const savedBg = localStorage.getItem('chatsphere_chat_bg');
+      if (savedBg) {
+        if (savedBg.startsWith('data:') || savedBg.startsWith('http')) {
+          messagesContainer.style.backgroundImage = `url('${savedBg}')`;
+          messagesContainer.style.backgroundSize = 'cover';
+          messagesContainer.style.backgroundPosition = 'center';
+        } else {
+          messagesContainer.style.background = savedBg;
+          messagesContainer.style.backgroundImage = 'none';
+        }
       } else {
-        messagesContainer.style.background = savedBg;
+        messagesContainer.style.background = '#1e293b';
+        messagesContainer.style.backgroundImage = 'none';
       }
     }
+    applySavedBackground();
 
     // STARTUP
     window.addEventListener('DOMContentLoaded', async () => {
@@ -564,49 +700,86 @@
       chatDropdownMenu.classList.toggle('hidden');
     });
 
+    // Custom Nickname Modal Logic
     menuSetNickname.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
       if (!selectedTargetUser) {
         alert("ကျေးဇူးပြု၍ User တစ်ယောက်ကို အရင် ရွေးချယ်ပါ!");
         return;
       }
+      nicknameModalTitle.textContent = `"${selectedTargetUser.name}" အတွက် Nickname သတ်မှတ်ပါ`;
+      nicknameInput.value = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
+      nicknameModal.classList.remove('hidden');
+    });
 
-      const currentNick = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
-      const newNickname = prompt(`"${selectedTargetUser.name}" အတွက် Nickname သတ်မှတ်ပါ:`, currentNick);
+    closeNicknameBtn.addEventListener('click', () => nicknameModal.classList.add('hidden'));
 
-      if (newNickname !== null) {
-        if (newNickname.trim() === '') {
-          delete nicknames[selectedTargetUser.id];
-        } else {
-          nicknames[selectedTargetUser.id] = newNickname.trim();
+    saveNicknameBtn.addEventListener('click', () => {
+      const newNick = nicknameInput.value.trim();
+      if (newNick === '') {
+        delete nicknames[selectedTargetUser.id];
+      } else {
+        nicknames[selectedTargetUser.id] = newNick;
+      }
+      localStorage.setItem('chatsphere_nicknames', JSON.stringify(nicknames));
+      
+      const displayName = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
+      targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
+      renderUsersUI();
+      nicknameModal.classList.add('hidden');
+    });
+
+    // Custom Background Customizer Modal Logic
+    menuChangeBg.addEventListener('click', () => {
+      chatDropdownMenu.classList.add('hidden');
+      bgModal.classList.remove('hidden');
+    });
+
+    closeBgBtn.addEventListener('click', () => bgModal.classList.add('hidden'));
+
+    // Select Color Circles
+    document.querySelectorAll('.color-circle').forEach(circle => {
+      circle.addEventListener('click', () => {
+        const color = circle.getAttribute('data-color');
+        localStorage.setItem('chatsphere_chat_bg', color);
+        applySavedBackground();
+        bgModal.classList.add('hidden');
+      });
+    });
+
+    // Pick Custom Color
+    customColorPicker.addEventListener('input', (e) => {
+      const color = e.target.value;
+      localStorage.setItem('chatsphere_chat_bg', color);
+      applySavedBackground();
+    });
+
+    // Upload Background Image File
+    bgFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 3 * 1024 * 1024) {
+          alert("ဓာတ်ပုံ ပမာဏ 3MB ထက် မကျော်လွန်ရပါ!");
+          return;
         }
-        localStorage.setItem('chatsphere_nicknames', JSON.stringify(nicknames));
-        
-        const displayName = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
-        targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
-        renderUsersUI();
+        uploadStatusText.textContent = "⏳ Upload တင်နေသည်...";
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const base64Img = evt.target.result;
+          localStorage.setItem('chatsphere_chat_bg', base64Img);
+          applySavedBackground();
+          uploadStatusText.textContent = "📁 ဓာတ်ပုံရွေးချယ်ရန် ဒီမှာ နှိပ်ပါ";
+          bgModal.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
       }
     });
 
-    menuChangeBg.addEventListener('click', () => {
-      chatDropdownMenu.classList.add('hidden');
-      const bgInput = prompt("Background အတွက် Color Code (ဥပမာ #0f172a) သို့မဟုတ် Image URL ထည့်ပါ:\n(မူလအတိုင်းပြန်ထားချင်ရင် အလွတ်ထားခဲ့ပါ)");
-
-      if (bgInput !== null) {
-        const trimmed = bgInput.trim();
-        if (trimmed === '') {
-          messagesContainer.style.background = '#1e293b';
-          messagesContainer.style.backgroundImage = 'none';
-          localStorage.removeItem('chatsphere_chat_bg');
-        } else if (trimmed.startsWith('http') || trimmed.startsWith('data:')) {
-          messagesContainer.style.backgroundImage = `url('${trimmed}')`;
-          localStorage.setItem('chatsphere_chat_bg', trimmed);
-        } else {
-          messagesContainer.style.background = trimmed;
-          messagesContainer.style.backgroundImage = 'none';
-          localStorage.setItem('chatsphere_chat_bg', trimmed);
-        }
-      }
+    // Reset Default Background
+    resetBgBtn.addEventListener('click', () => {
+      localStorage.removeItem('chatsphere_chat_bg');
+      applySavedBackground();
+      bgModal.classList.add('hidden');
     });
 
     document.addEventListener('click', (e) => {
@@ -615,7 +788,7 @@
       }
     });
 
-    // PRESENCE SYSTEM WITH 5-MIN GRACE PERIOD LOGIC
+    // PRESENCE SYSTEM (UPDATED FOR INCOGNITO / HIDE ONLINE MODE)
     function initGlobalPresence() {
       const globalPresenceRef = db.ref(`global_online_users/${myClientId}`);
       const connectedRef = db.ref('.info/connected');
@@ -625,7 +798,8 @@
           globalPresenceRef.set({
             id: myClientId,
             name: currentUsername,
-            online: true,
+            online: hideOnlineStatus ? false : true, // Hide လုပ်ထားရင် false ပြမည်
+            hideOnline: hideOnlineStatus,
             lastSeen: firebase.database.ServerValue.TIMESTAMP
           });
 
@@ -633,6 +807,7 @@
             id: myClientId,
             name: currentUsername,
             online: false,
+            hideOnline: hideOnlineStatus,
             lastSeen: firebase.database.ServerValue.TIMESTAMP
           });
         }
@@ -644,13 +819,11 @@
         renderUsersUI();
       });
 
-      // Refresh every 30 seconds
       setInterval(() => {
         renderUsersUI();
       }, 30000);
     }
 
-    // Render Users List Logic
     function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
@@ -663,14 +836,14 @@
         const cleanName = (user.name || '').trim();
         if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
 
-        const isActuallyOnline = user.online === true;
+        // မပြခိုင်းထားသူ (hideOnline) ဖြစ်ပါက သို့မဟုတ် သာမန် offline ဖြစ်ပါက Status မပြပါ
+        const isActuallyOnline = user.online === true && !user.hideOnline;
         const timeDiff = now - (user.lastSeen || 0);
-        const isWithinGracePeriod = !isActuallyOnline && (timeDiff <= GRACE_PERIOD_MS);
+        const isWithinGracePeriod = !user.hideOnline && !isActuallyOnline && (timeDiff <= GRACE_PERIOD_MS);
 
-        if (!isActuallyOnline && !isWithinGracePeriod) return;
+        if (!isActuallyOnline && !isWithinGracePeriod && !user.hideOnline) return;
 
         visibleCount++;
-
         const displayName = nicknames[user.id] || cleanName;
 
         const userEl = document.createElement('div');
@@ -691,7 +864,6 @@
       });
 
       userCountEl.textContent = visibleCount;
-      
       if (selectedTargetUser) {
         updateHeaderOnlineStatus();
       }
@@ -704,10 +876,11 @@
       const now = Date.now();
       const GRACE_PERIOD_MS = 5 * 60 * 1000;
 
-      if (liveUser && liveUser.online) {
+      // ရွေးချယ်ခံရသော User သည် Online status ဖုန်းကွယ်ထားလျှင် Offline ဟုသာပြမည်
+      if (liveUser && liveUser.online && !liveUser.hideOnline) {
         onlineStatusBadge.textContent = "● online";
         onlineStatusBadge.className = "online-badge";
-      } else if (liveUser && liveUser.lastSeen) {
+      } else if (liveUser && liveUser.lastSeen && !liveUser.hideOnline) {
         const diffMs = now - liveUser.lastSeen;
         if (diffMs <= GRACE_PERIOD_MS) {
           const minsAgo = Math.max(1, Math.floor(diffMs / (1000 * 60)));
@@ -729,7 +902,6 @@
       targetUsernameEl.textContent = `💬 ${displayName} နှင့် စာပို့နေပါသည်`;
       
       updateHeaderOnlineStatus();
-
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
       noChatMsg.classList.add('hidden');
@@ -739,69 +911,68 @@
       document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
       listenDirectMessages();
     }
-let messagesRef = null;
 
-function listenDirectMessages() {
-  messagesContainer.innerHTML = '';
-  if (!activeChatRoomId) return;
+    // REALTIME DIRECT MESSAGES LISTENER
+    function listenDirectMessages() {
+      messagesContainer.innerHTML = '';
+      if (!activeChatRoomId) return;
 
-  // ယခင်ဖွင့်ထားခဲ့သော Listener များကို အရင် ပိတ်ပါ
-  if (messagesRef) {
-    messagesRef.off();
-  }
+      if (messagesRef) {
+        messagesRef.off();
+      }
 
-  messagesRef = db.ref(`direct_messages/${activeChatRoomId}`);
+      messagesRef = db.ref(`direct_messages/${activeChatRoomId}`);
 
-  // ၁။ စာအသစ် တစ်ကြောင်းချင်းစီ ဝင်လာမှသာ Render လုပ်မည်
-  messagesRef.on('child_added', (snapshot) => {
-    const key = snapshot.key;
-    const msg = snapshot.val();
+      messagesRef.on('child_added', (snapshot) => {
+        const key = snapshot.key;
+        const msg = snapshot.val();
 
-    // စာလက်ခံရရှိသူဖြစ်ပြီး မဖတ်ရသေးပါက Read status ကို update လုပ်မည်
-    if (msg.senderId !== myClientId && !msg.isRead) {
-      db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
+        if (msg.senderId !== myClientId && !msg.isRead) {
+          db.ref(`direct_messages/${activeChatRoomId}/${key}`).update({ isRead: true });
+        }
+
+        renderMessage(key, msg);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+
+      messagesRef.on('child_changed', (snapshot) => {
+        const key = snapshot.key;
+        const msg = snapshot.val();
+        const existingEl = document.getElementById(`msg-${key}`);
+        if (existingEl) {
+          const isMine = msg.senderId === myClientId;
+          // Hide Online Mode ဖွင့်ထားပါက သို့မဟုတ် စာဖတ်ပြီးပါက အမှန်ခြစ်နှစ်ခု (✓✓) ပြပေးမည်
+          const showDoubleCheck = msg.isRead || hideOnlineStatus;
+          const statusHTML = isMine ? (showDoubleCheck ? '<span class="read-status read">✓✓</span>' : '<span class="read-status sent">✓</span>') : '';
+          const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          existingEl.querySelector('.msg-text').textContent = msg.text;
+          existingEl.querySelector('.msg-time').innerHTML = `${timeStr} ${msg.isEdited ? '(edited)' : ''} ${statusHTML}`;
+        }
+      });
+
+      messagesRef.on('child_removed', (snapshot) => {
+        const key = snapshot.key;
+        const existingEl = document.getElementById(`msg-${key}`);
+        if (existingEl) {
+          existingEl.remove();
+        }
+      });
     }
-
-    renderMessage(key, msg);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  });
-
-  // ၂။ စာပြင်ခြင်း (Edit) သို့မဟုတ် ဖတ်ပြီးကြောင်း (Read status) ပြောင်းပါက UI တွင် Update လုပ်မည်
-  messagesRef.on('child_changed', (snapshot) => {
-    const key = snapshot.key;
-    const msg = snapshot.val();
-    
-    // UI ထဲက သက်ဆိုင်ရာ message element ကို ရှာပြီး ပြင်ပေးရန် (သို့မဟုတ် listenDirectMessages ကို သန့်ရှင်းစွာ ထိန်းကျောင်းရန်)
-    const existingMsgEl = document.getElementById(`msg-${key}`);
-    if (existingMsgEl) {
-      // Message status သို့မဟုတ် ပြင်ဆင်ထားသော စာသားကို Update လုပ်နိုင်သည်
-    }
-  });
-
-  // ၃။ စာဖျက်လိုက်ပါက UI မှ ဖျက်မည်
-  messagesRef.on('child_removed', (snapshot) => {
-    const key = snapshot.key;
-    const existingMsgEl = document.getElementById(`msg-${key}`);
-    if (existingMsgEl) {
-      existingMsgEl.remove();
-    }
-  });
-}
 
     function renderMessage(key, msg) {
       const isMine = msg.senderId === myClientId;
       const msgDiv = document.createElement('div');
+      msgDiv.id = `msg-${key}`;
       msgDiv.className = `message ${isMine ? 'mine' : ''}`;
 
       const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       let statusHTML = '';
       if (isMine) {
-        if (msg.isRead) {
-          statusHTML = `<span class="read-status read" title="Read">✓✓</span>`;
-        } else {
-          statusHTML = `<span class="read-status sent" title="Sent">✓</span>`;
-        }
+        // Online status ပိတ်ထားလျှင် စာပို့သည့်အခါ အမှန်ခြစ်နှစ်ခု (✓✓) တန်းပြမည်
+        const showDoubleCheck = msg.isRead || hideOnlineStatus;
+        statusHTML = showDoubleCheck ? `<span class="read-status read">✓✓</span>` : `<span class="read-status sent">✓</span>`;
       }
 
       let replyHTML = '';
@@ -874,7 +1045,7 @@ function listenDirectMessages() {
       messagesContainer.appendChild(msgDiv);
     }
 
-    // SHOW CONTEXT MENU (DELETE, REPLY, EDIT, REACT)
+    // CONTEXT MENU
     function showContextMenu(e, key, msg, isMine) {
       selectedMsgKey = key;
       selectedMsgData = msg;
@@ -883,7 +1054,6 @@ function listenDirectMessages() {
       let x = touch.clientX;
       let y = touch.clientY;
 
-      // Adjusted boundary checks for various phone screens
       if (x + 170 > window.innerWidth) x = window.innerWidth - 180;
       if (y + 190 > window.innerHeight) y = window.innerHeight - 200;
       if (x < 10) x = 10;
@@ -982,8 +1152,10 @@ function listenDirectMessages() {
       replyPreviewBar.classList.add('hidden');
     });
 
+    // Profile Modal Open (Load Saved Setting)
     openProfileBtn.addEventListener('click', () => {
       modalUsernameInput.value = currentUsername;
+      hideOnlineToggle.checked = hideOnlineStatus;
       profileModal.classList.remove('hidden');
     });
 
@@ -991,6 +1163,7 @@ function listenDirectMessages() {
       profileModal.classList.add('hidden');
     });
 
+    // Save Profile & Online Status Toggle
     saveProfileBtn.addEventListener('click', () => {
       const newUsername = modalUsernameInput.value.trim();
       if (!newUsername) return;
@@ -999,7 +1172,19 @@ function listenDirectMessages() {
       currentUsername = newUsername;
       displayMyUsername.textContent = currentUsername;
 
-      db.ref(`global_online_users/${myClientId}`).update({ name: currentUsername });
+      hideOnlineStatus = hideOnlineToggle.checked;
+      localStorage.setItem('chatsphere_hide_online', hideOnlineStatus ? 'true' : 'false');
+
+      // Firebase status updates
+      db.ref(`global_online_users/${myClientId}`).update({
+        name: currentUsername,
+        online: hideOnlineStatus ? false : true,
+        hideOnline: hideOnlineStatus
+      });
+
+      renderUsersUI();
+      if (activeChatRoomId) listenDirectMessages();
+
       profileModal.classList.add('hidden');
     });
 
