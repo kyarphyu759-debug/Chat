@@ -65,6 +65,7 @@
       .sidebar { width: 320px; padding-top: 1rem; }
     }
     
+    /* Clickable Profile Card Design */
     .my-profile-info { 
       background: #1e293b; 
       padding: 0.8rem 1rem; 
@@ -74,6 +75,13 @@
       justify-content: space-between; 
       align-items: center; 
       border: 1px solid #334155; 
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+      touch-action: manipulation;
+    }
+    .my-profile-info:hover {
+      background: #334155;
+      border-color: #38bdf8;
     }
     .my-profile-left {
       display: flex;
@@ -122,6 +130,26 @@
     }
     .user-item:hover { background: #334155; }
     .user-item.active { background: #1e3a8a; border-color: #38bdf8; }
+    .user-item.pinned {
+      border-left: 3px solid #38bdf8;
+      background: #0f2942;
+    }
+
+    .pin-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.2s, transform 0.2s;
+      touch-action: manipulation;
+    }
+    .pin-btn:hover, .pin-btn.active {
+      color: #38bdf8;
+      transform: scale(1.15);
+    }
     
     .user-info-group { display: flex; align-items: center; gap: 10px; overflow: hidden; }
     .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
@@ -323,8 +351,6 @@
       cursor: pointer; 
       touch-action: manipulation;
     }
-    
-    .edit-profile-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 0.4rem 0.7rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; touch-action: manipulation; }
 
     .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
 
@@ -479,7 +505,8 @@
   <div id="chat-app">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-      <div class="my-profile-info">
+      <!-- Clickable Profile Card -->
+      <div class="my-profile-info" id="open-profile-btn" title="Click to Edit Profile">
         <div class="my-profile-left">
           <img id="my-profile-img" class="avatar-img" src="" alt="Profile" />
           <div>
@@ -487,7 +514,6 @@
             <p id="display-my-username">Guest</p>
           </div>
         </div>
-        <button id="open-profile-btn" class="edit-profile-btn">⚙️ Edit</button>
       </div>
       
       <div class="users-list">
@@ -548,10 +574,10 @@
     <button id="ctx-delete-btn" class="danger">🗑️ Delete</button>
   </div>
 
-  <!-- Profile Modal (With Set Profile & Hide Online Toggle Option) -->
+  <!-- Profile Modal (With Edit Profile Option) -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3>Profile ပြောင်းလဲရန်</h3>
+      <h3>Edit Profile</h3>
       
       <!-- Set Profile Picture Section at Top -->
       <div class="profile-upload-section">
@@ -569,8 +595,8 @@
       <!-- Hide Online Status Toggle Switch -->
       <div class="toggle-group">
         <div>
-          <label style="color:#f8fafc; font-weight:600;">Online Status </label>
-          <p style="font-size:0.75rem; color:#94a3b8;">Online Status</p>
+          <label style="color:#f8fafc; font-weight:600;">Online Status ပိတ်မည်</label>
+          <p style="font-size:0.75rem; color:#94a3b8;">Online ပြမနေတော့ဘဲ စာပို့မှ အမှန်ခြစ်နှစ်ခုပြပါမည်</p>
         </div>
         <label class="switch">
           <input type="checkbox" id="hide-online-toggle">
@@ -677,6 +703,7 @@
     }
 
     let nicknames = getStoredObject('chatsphere_nicknames');
+    let pinnedUsers = getStoredObject('chatsphere_pinned_users');
     let latestUsersList = [];
 
     // Active Action Variables
@@ -908,30 +935,49 @@
       }, 30000);
     }
 
+    // RENDER USER LIST WITH PIN FEATURE
     function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
       const GRACE_PERIOD_MS = 5 * 60 * 1000; 
       const now = Date.now();
 
-      latestUsersList.forEach(user => {
-        if (user.id === myClientId) return; 
+      // 1. Filter User List
+      const validUsers = latestUsersList.filter(user => {
+        if (user.id === myClientId) return false; 
 
         const cleanName = (user.name || '').trim();
-        if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return;
+        if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return false;
 
         const isActuallyOnline = user.online === true && !user.hideOnline;
         const timeDiff = now - (user.lastSeen || 0);
         const isWithinGracePeriod = !user.hideOnline && !isActuallyOnline && (timeDiff <= GRACE_PERIOD_MS);
 
-        if (!isActuallyOnline && !isWithinGracePeriod && !user.hideOnline) return;
+        // Show user if online, within grace period, offline, or PINNED
+        return isActuallyOnline || isWithinGracePeriod || user.hideOnline || pinnedUsers[user.id];
+      });
 
+      // 2. Sort Users: Pinned Users Stay On Top!
+      validUsers.sort((a, b) => {
+        const isAPinned = !!pinnedUsers[a.id];
+        const isBPinned = !!pinnedUsers[b.id];
+        if (isAPinned && !isBPinned) return -1;
+        if (!isAPinned && isBPinned) return 1;
+        return 0;
+      });
+
+      // 3. Render Items
+      validUsers.forEach(user => {
         visibleCount++;
+        const cleanName = (user.name || '').trim();
         const displayName = nicknames[user.id] || cleanName;
         const userPic = user.profilePic || DEFAULT_AVATAR;
 
+        const isActuallyOnline = user.online === true && !user.hideOnline;
+        const isPinned = !!pinnedUsers[user.id];
+
         const userEl = document.createElement('div');
-        userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''}`;
+        userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''} ${isPinned ? 'pinned' : ''}`;
         
         userEl.innerHTML = `
           <div class="user-info-group">
@@ -939,10 +985,27 @@
             <img class="avatar-img small" src="${userPic}" alt="User Avatar" />
             <span class="user-name">${escapeHTML(displayName)}</span>
           </div>
+          <button class="pin-btn ${isPinned ? 'active' : ''}" title="${isPinned ? 'Unpin User' : 'Pin User'}">
+            ${isPinned ? '📌' : '📍'}
+          </button>
         `;
         
-        userEl.addEventListener('click', () => {
+        userEl.addEventListener('click', (e) => {
+          if (e.target.classList.contains('pin-btn')) return;
           selectUserToChat(user);
+        });
+
+        // Pin Button Event Listener
+        const pinBtn = userEl.querySelector('.pin-btn');
+        pinBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (pinnedUsers[user.id]) {
+            delete pinnedUsers[user.id];
+          } else {
+            pinnedUsers[user.id] = true;
+          }
+          localStorage.setItem('chatsphere_pinned_users', JSON.stringify(pinnedUsers));
+          renderUsersUI();
         });
 
         usersContainer.appendChild(userEl);
