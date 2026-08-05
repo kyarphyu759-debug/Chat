@@ -65,7 +65,7 @@
       .sidebar { width: 320px; padding-top: 1rem; }
     }
     
-    /* Clickable Profile Card Design */
+    /* Profile Card Design */
     .my-profile-info { 
       background: #1e293b; 
       padding: 0.8rem 1rem; 
@@ -292,7 +292,6 @@
       line-height: 1.35;
     }
 
-    /* In-Chat Inline Typing Indicator */
     .in-chat-typing {
       align-self: flex-start;
       font-size: 0.8rem;
@@ -307,7 +306,6 @@
       gap: 6px;
     }
 
-    /* Media Messages Styling */
     .msg-image {
       max-width: 100%;
       max-height: 250px;
@@ -491,6 +489,74 @@
     .context-menu button:hover { background: #334155; }
     .context-menu button.danger { color: #ef4444; }
 
+    /* Custom Stylish Alert Modal */
+    .custom-alert-card {
+      text-align: center;
+      animation: alertPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes alertPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .alert-icon {
+      font-size: 2.8rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .alert-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #f8fafc;
+      margin-bottom: 0.5rem;
+    }
+    .alert-message {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      margin-bottom: 1.5rem;
+      line-height: 1.4;
+    }
+
+    /* Toast Notification System */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast-message {
+      background: rgba(30, 41, 59, 0.95);
+      color: #f8fafc;
+      border: 1px solid #38bdf8;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toastIn 0.3s forwards, toastOut 0.3s 2.7s forwards;
+    }
+    .toast-message.blocked {
+      border-color: #ef4444;
+    }
+    .toast-message.unblocked {
+      border-color: #22c55e;
+    }
+    @keyframes toastIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes toastOut {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-20px); opacity: 0; }
+    }
+
     /* Modals System */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.75); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
     .modal-card { background: #1e293b; padding: 1.5rem; border-radius: 14px; width: 90%; max-width: 400px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -660,6 +726,19 @@
     </div>
   </div>
 
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Custom Dark Theme Alert Modal -->
+  <div id="custom-alert-modal" class="modal-overlay hidden">
+    <div class="modal-card custom-alert-card">
+      <span id="alert-icon" class="alert-icon">🚫</span>
+      <div id="alert-title" class="alert-title">User Blocked</div>
+      <div id="alert-message" class="alert-message">အချက်အလက်တစ်ခုခု...</div>
+      <button type="button" id="alert-ok-btn" class="btn-primary" style="width: 100%;">OK</button>
+    </div>
+  </div>
+
   <!-- Context Menu with Reaction Options -->
   <div id="context-menu" class="context-menu hidden">
     <div class="reaction-picker" id="reaction-picker">
@@ -675,7 +754,7 @@
     <button id="ctx-delete-btn" class="danger">🗑️ Delete</button>
   </div>
 
-  <!-- Profile Modal (With Edit Profile Option) -->
+  <!-- Profile Modal -->
   <div id="profile-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <h3>Edit Profile</h3>
@@ -794,10 +873,8 @@
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
-    // Unread Count Management Object
     let unreadCounts = {};
 
-    // Web Audio Synthesizer sound effects
     function playSound(type) {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -826,7 +903,6 @@
       }
     }
 
-    // Request Web Push Notification Permission
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
@@ -853,7 +929,6 @@
     let blockedUsers = getStoredObject('chatsphere_blocked_users');
     let latestUsersList = [];
 
-    // Active Action Variables
     let selectedMsgData = null;
     let selectedMsgKey = null;
     let activeReplyData = null;
@@ -861,7 +936,6 @@
     let typingRef = null;
     let typingTimeout = null;
 
-    // Media Recording Variables
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -896,6 +970,14 @@
     const ctxEditBtn = document.getElementById('ctx-edit-btn');
     const ctxDeleteBtn = document.getElementById('ctx-delete-btn');
 
+    // Custom Alert Elements
+    const customAlertModal = document.getElementById('custom-alert-modal');
+    const alertIcon = document.getElementById('alert-icon');
+    const alertTitle = document.getElementById('alert-title');
+    const alertMessage = document.getElementById('alert-message');
+    const alertOkBtn = document.getElementById('alert-ok-btn');
+    const toastContainer = document.getElementById('toast-container');
+
     // Modals DOM
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
@@ -925,6 +1007,30 @@
     const menuSetNickname = document.getElementById('menu-set-nickname');
     const menuChangeBg = document.getElementById('menu-change-bg');
     const menuBlockUser = document.getElementById('menu-block-user');
+
+    /* Custom Stylish Alert Functions */
+    function showCustomAlert(title, message, icon = '🚫') {
+      alertIcon.textContent = icon;
+      alertTitle.textContent = title;
+      alertMessage.textContent = message;
+      customAlertModal.classList.remove('hidden');
+    }
+
+    alertOkBtn.addEventListener('click', () => {
+      customAlertModal.classList.add('hidden');
+    });
+
+    /* Toast Notification Helper */
+    function showToast(text, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast-message ${type}`;
+      toast.innerHTML = text;
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
 
     // Apply Saved Background
     function applySavedBackground() {
@@ -973,18 +1079,20 @@
       }
     });
 
-    // Block User Logic
+    // Block & Unblock User Logic with Beautiful UI
     menuBlockUser.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
       if (!selectedTargetUser) return;
 
       const targetId = selectedTargetUser.id;
+      const targetName = nicknames[targetId] || selectedTargetUser.name;
+
       if (blockedUsers[targetId]) {
         delete blockedUsers[targetId];
-        alert(`"${selectedTargetUser.name}" ကို Unblock လုပ်ပြီးပါပြီ။`);
+        showToast(`✅ "${targetName}" ကို Unblock လုပ်ပြီးပါပြီ။`, 'unblocked');
       } else {
         blockedUsers[targetId] = true;
-        alert(`"${selectedTargetUser.name}" ကို Block လိုက်ပါပြီ။ ဘာစာမှ ပို့၍ရတော့မည်မဟုတ်ပါ။`);
+        showToast(`🚫 "${targetName}" ကို Block လိုက်ပါပြီ။`, 'blocked');
       }
 
       localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUsers));
@@ -1018,7 +1126,7 @@
     menuSetNickname.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
       if (!selectedTargetUser) {
-        alert("ကျေးဇူးပြု၍ User တစ်ယောက်ကို အရင် ရွေးချယ်ပါ!");
+        showCustomAlert("သတိပေးချက်", "ကျေးဇူးပြု၍ User တစ်ယောက်ကို အရင် ရွေးချယ်ပါ!", "⚠️");
         return;
       }
       nicknameModalTitle.textContent = `"${selectedTargetUser.name}" အတွက် Nickname သတ်မှတ်ပါ`;
@@ -1071,7 +1179,7 @@
       const file = e.target.files[0];
       if (file) {
         if (file.size > 3 * 1024 * 1024) {
-          alert("ဓာတ်ပုံ ပမာဏ 3MB ထက် မကျော်လွန်ရပါ!");
+          showCustomAlert("File Size Error", "ဓာတ်ပုံ ပမာဏ 3MB ထက် မကျော်လွန်ရပါ!", "📁");
           return;
         }
         uploadStatusText.textContent = "⏳ Upload တင်နေသည်...";
@@ -1361,7 +1469,6 @@
 
         renderMessage(key, msg);
 
-        // Keep Typing Indicator always at the bottom if visible
         const typingEl = document.getElementById('in-chat-typing-indicator');
         if (typingEl) {
           messagesContainer.appendChild(typingEl);
@@ -1549,7 +1656,7 @@
     ctxReplyBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
       if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
-        alert("Block ထားသောကြောင့် စာပြန်၍မရပါ။");
+        showCustomAlert("သတိပေးချက်", "Block ထားသောကြောင့် စာပြန်၍မရပါ။", "🚫");
         return;
       }
 
@@ -1571,7 +1678,7 @@
     ctxEditBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
       if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
-        alert("Block ထားသောကြောင့် ပြင်ဆင်၍မရပါ။");
+        showCustomAlert("သတိပေးချက်", "Block ထားသောကြောင့် ပြင်ဆင်၍မရပါ။", "🚫");
         return;
       }
 
@@ -1596,7 +1703,7 @@
       e.preventDefault();
       
       if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
-        alert("ဤ User ကို Block ထားသောကြောင့် စာပို့၍မရပါ။");
+        showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် စာပို့၍မရပါ။", "🚫");
         return;
       }
 
@@ -1628,7 +1735,7 @@
     // IMAGE & FILE SHARING HANDLER
     fileAttachBtn.addEventListener('click', () => {
       if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
-        alert("ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။");
+        showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။", "🚫");
         return;
       }
       fileInput.click();
@@ -1639,12 +1746,12 @@
       if (!file || !activeChatRoomId) return;
 
       if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
-        alert("ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။");
+        showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။", "🚫");
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
-        alert("ဖိုင် ပမာဏသည် 2MB ထက် မကျော်လွန်ရပါ!");
+        showCustomAlert("File Size Error", "ဖိုင် ပမာဏသည် 2MB ထက် မကျော်လွန်ရပါ!", "📁");
         return;
       }
 
@@ -1675,12 +1782,12 @@
       reader.readAsDataURL(file);
     });
 
-    // VOICE MESSAGE SYSTEM (MEDIA RECORDER API)
+    // VOICE MESSAGE SYSTEM
     micBtn.addEventListener('click', async () => {
       if (!activeChatRoomId) return;
 
       if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
-        alert("ဤ User ကို Block ထားသောကြောင့် Voice Message ပို့၍မရပါ။");
+        showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် Voice Message ပို့၍မရပါ။", "🚫");
         return;
       }
 
@@ -1722,7 +1829,7 @@
           micBtn.classList.add('recording');
           micBtn.title = "Stop Recording";
         } catch (err) {
-          alert("Microphone သုံးစွဲခွင့် ပိတ်ထားပါသည် သို့မဟုတ် Support မလုပ်ပါ။");
+          showCustomAlert("Permission Denied", "Microphone သုံးစွဲခွင့် ပိတ်ထားပါသည် သို့မဟုတ် Support မလုပ်ပါ။", "🎙️");
         }
       } else {
         mediaRecorder.stop();
@@ -1732,7 +1839,7 @@
       }
     });
 
-    // PROFILE MODAL & PROFILE PICTURE CONTROLS
+    // PROFILE MODAL & CONTROLS
     openProfileBtn.addEventListener('click', () => {
       modalUsernameInput.value = currentUsername;
       hideOnlineToggle.checked = hideOnlineStatus;
@@ -1749,7 +1856,7 @@
       const file = e.target.files[0];
       if (file) {
         if (file.size > 2 * 1024 * 1024) {
-          alert("Profile Image Size သည် 2MB ထက် မကျော်ရပါ!");
+          showCustomAlert("File Size Error", "Profile Image Size သည် 2MB ထက် မကျော်ရပါ!", "📷");
           return;
         }
         const reader = new FileReader();
