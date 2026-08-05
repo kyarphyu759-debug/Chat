@@ -980,6 +980,8 @@
       measurementId: "G-TR1DR12NSV"
     };
 
+    
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -1175,43 +1177,50 @@
       }
     });
 
-    /* AUTHENTICATION SYSTEM LOGIC */
-    authToggleBtn.addEventListener('click', () => {
-      isRegistering = !isRegistering;
-      authTitle.textContent = isRegistering ? "အကောင့်အသစ်ပြုလုပ်ပါ" : "အကောင့်ဝင်ရောက်ပါ";
-      authSubmitBtn.textContent = isRegistering ? "Register ပြုလုပ်မည်" : "အကောင့်ဝင်မည်";
-      authToggleBtn.textContent = isRegistering ? "အကောင့်ရှိပြီးသားပါက ဒီမှာဝင်ပါ" : "အကောင့်မရှိသေးပါက ဒီမှာ အသစ်ဖွင့်ပါ";
-    });
+    /* AUTHENTICATION SYSTEM LOGIC (UPDATED) */
+authToggleBtn.addEventListener('click', () => {
+  isRegistering = !isRegistering;
+  authTitle.textContent = isRegistering ? "အကောင့်အသစ်ပြုလုပ်ပါ" : "အကောင့်ဝင်ရောက်ပါ";
+  authSubmitBtn.textContent = isRegistering ? "Register ပြုလုပ်မည်" : "အကောင့်ဝင်မည်";
+  authToggleBtn.textContent = isRegistering ? "အကောင့်ရှိပြီးသားပါက ဒီမှာဝင်ပါ" : "အကောင့်မရှိသေးပါက ဒီမှာ အသစ်ဖွင့်ပါ";
+});
 
-    authSubmitBtn.addEventListener('click', async () => {
-      const email = authEmail.value.trim();
-      const password = authPassword.value.trim();
+// Main Auth Function
+const handleAuthSubmit = async (e) => {
+  if (e) e.preventDefault();
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
 
-      if (!email || !password) {
-        showCustomAlert("အချက်အလက် လိုအပ်ပါသည်", "အီးမေးလ်နှင့် စကားဝှက်ကို ပြည့်စုံစွာ ဖြည့်ပါ", "⚠️");
-        return;
-      }
+  if (!email || !password) {
+    showCustomAlert("အချက်အလက် လိုအပ်ပါသည်", "အီးမေးလ်နှင့် စကားဝှက်ကို ပြည့်စုံစွာ ဖြည့်ပါ", "⚠️");
+    return;
+  }
 
-      try {
-        if (isRegistering) {
-          await auth.createUserWithEmailAndPassword(email, password);
-        } else {
-          await auth.signInWithEmailAndPassword(email, password);
-        }
-      } catch (err) {
-        showCustomAlert("Auth Error", err.message, "⚠️");
-      }
-    });
+  // Disable button during process
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = "ဆောင်ရွက်နေပါသည်...";
 
-    authLogoutBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (confirm("အကောင့်ထဲမှ ထွက်ခွာရန် သေချာပါသလား?")) {
-        if (myClientId) {
-          db.ref(`global_online_users/${myClientId}`).remove();
-        }
-        auth.signOut();
-      }
-    });
+  try {
+    if (isRegistering) {
+      await auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+  } catch (err) {
+    showCustomAlert("Auth Error", err.message, "⚠️");
+  } finally {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = isRegistering ? "Register ပြုလုပ်မည်" : "အကောင့်ဝင်မည်";
+  }
+};
+
+// Button Click & Enter Key Event Listeners
+authSubmitBtn.addEventListener('click', handleAuthSubmit);
+[authEmail, authPassword].forEach(input => {
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleAuthSubmit(e);
+  });
+});
 
     auth.onAuthStateChanged((user) => {
       if (user) {
