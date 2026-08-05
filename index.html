@@ -135,6 +135,23 @@
       background: #0f2942;
     }
 
+    .user-right-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .unread-badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+    }
+
     .pin-btn {
       background: none;
       border: none;
@@ -195,7 +212,6 @@
     .header-right-group { display: flex; align-items: center; gap: 12px; }
     .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
     .online-badge.offline { color: #94a3b8; }
-    .typing-status { font-size: 0.75rem; color: #38bdf8; font-style: italic; margin-left: 5px; }
 
     .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; touch-action: manipulation; }
     .chat-menu-btn:hover { color: #f8fafc; background: #334155; }
@@ -274,6 +290,21 @@
       text-align: left !important;
       white-space: pre-wrap;
       line-height: 1.35;
+    }
+
+    /* In-Chat Inline Typing Indicator */
+    .in-chat-typing {
+      align-self: flex-start;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      font-style: italic;
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 12px;
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     /* Media Messages Styling */
@@ -590,7 +621,6 @@
         
         <div class="header-right-group">
           <span class="online-badge" id="online-status-badge">● online</span>
-          <span class="typing-status hidden" id="typing-status-badge">typing...</span>
           <button class="chat-menu-btn" id="chat-menu-btn" title="Options">☰</button>
         </div>
 
@@ -759,7 +789,10 @@
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
 
-    // Web Audio Synthesizer sound effects (No external audio file needed)
+    // Unread Count Management Object
+    let unreadCounts = {};
+
+    // Web Audio Synthesizer sound effects
     function playSound(type) {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -834,7 +867,6 @@
     const userCountEl = document.getElementById('user-count');
     const targetUsernameEl = document.getElementById('target-username');
     const onlineStatusBadge = document.getElementById('online-status-badge');
-    const typingStatusBadge = document.getElementById('typing-status-badge');
     const messagesContainer = document.getElementById('messages-container');
     const noChatMsg = document.getElementById('no-chat-msg');
     const inputWrapper = document.getElementById('input-wrapper');
@@ -914,6 +946,7 @@
         displayMyUsername.textContent = currentUsername;
         myProfileImg.src = myProfilePic;
         initGlobalPresence();
+        listenAllUnreadMessages();
       } catch (error) {
         console.error("Auth Error:", error);
       }
@@ -1051,6 +1084,36 @@
       }, 30000);
     }
 
+    // GLOBAL UNREAD MESSAGES LISTENER
+    function listenAllUnreadMessages() {
+      db.ref('direct_messages').on('value', (snapshot) => {
+        const allRooms = snapshot.val() || {};
+        unreadCounts = {};
+
+        Object.keys(allRooms).forEach(roomId => {
+          if (roomId.includes(myClientId)) {
+            const roomMsgs = allRooms[roomId];
+            let count = 0;
+            let otherUserId = null;
+
+            Object.values(roomMsgs).forEach(msg => {
+              if (msg.senderId !== myClientId) {
+                otherUserId = msg.senderId;
+                if (!msg.isRead) {
+                  count++;
+                }
+              }
+            });
+
+            if (otherUserId) {
+              unreadCounts[otherUserId] = count;
+            }
+          }
+        });
+        renderUsersUI();
+      });
+    }
+
     function renderUsersUI() {
       usersContainer.innerHTML = '';
       let visibleCount = 0;
@@ -1067,7 +1130,7 @@
         const timeDiff = now - (user.lastSeen || 0);
         const isWithinGracePeriod = !user.hideOnline && !isActuallyOnline && (timeDiff <= GRACE_PERIOD_MS);
 
-        return isActuallyOnline || isWithinGracePeriod || user.hideOnline || pinnedUsers[user.id];
+        return isActuallyOnline || isWithinGracePeriod || user.hideOnline || pinnedUsers[user.id] || (unreadCounts[user.id] > 0);
       });
 
       validUsers.sort((a, b) => {
@@ -1086,6 +1149,7 @@
 
         const isActuallyOnline = user.online === true && !user.hideOnline;
         const isPinned = !!pinnedUsers[user.id];
+        const unreadNum = unreadCounts[user.id] || 0;
 
         const userEl = document.createElement('div');
         userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === user.id ? 'active' : ''} ${isPinned ? 'pinned' : ''}`;
@@ -1096,9 +1160,12 @@
             <img class="avatar-img small" src="${userPic}" alt="User Avatar" />
             <span class="user-name">${escapeHTML(displayName)}</span>
           </div>
-          <button class="pin-btn ${isPinned ? 'active' : ''}" title="${isPinned ? 'Unpin User' : 'Pin User'}">
-            ${isPinned ? '📌' : '📍'}
-          </button>
+          <div class="user-right-group">
+            ${unreadNum > 0 ? `<span class="unread-badge">${unreadNum}</span>` : ''}
+            <button class="pin-btn ${isPinned ? 'active' : ''}" title="${isPinned ? 'Unpin User' : 'Pin User'}">
+              ${isPinned ? '📌' : '📍'}
+            </button>
+          </div>
         `;
         
         userEl.addEventListener('click', (e) => {
@@ -1172,16 +1239,27 @@
       listenTypingStatus();
     }
 
-    // TYPING STATUS REALTIME LISTENER
+    // IN-CHAT TYPING INDICATOR REALTIME LISTENER
     function listenTypingStatus() {
       if (typingRef) typingRef.off();
       
       typingRef = db.ref(`typing_status/${activeChatRoomId}/${selectedTargetUser.id}`);
       typingRef.on('value', (snapshot) => {
+        let typingEl = document.getElementById('in-chat-typing-indicator');
         if (snapshot.val() === true) {
-          typingStatusBadge.classList.remove('hidden');
+          if (!typingEl) {
+            typingEl = document.createElement('div');
+            typingEl.id = 'in-chat-typing-indicator';
+            typingEl.className = 'in-chat-typing';
+            const displayName = nicknames[selectedTargetUser.id] || selectedTargetUser.name;
+            typingEl.innerHTML = `✍️ ${escapeHTML(displayName)} is typing...`;
+            messagesContainer.appendChild(typingEl);
+          }
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } else {
-          typingStatusBadge.classList.add('hidden');
+          if (typingEl) {
+            typingEl.remove();
+          }
         }
       });
     }
@@ -1223,6 +1301,13 @@
         }
 
         renderMessage(key, msg);
+
+        // Keep Typing Indicator always at the bottom if visible
+        const typingEl = document.getElementById('in-chat-typing-indicator');
+        if (typingEl) {
+          messagesContainer.appendChild(typingEl);
+        }
+
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
 
