@@ -683,6 +683,26 @@
       border: 3px solid var(--accent);
       background: var(--bg-header);
     }
+
+    /* Mobile view responsive styling for sidebar & chat switching */
+@media (max-width: 767px) {
+  #chat-app {
+    display: flex;
+    width: 100vw;
+    height: 100dvh;
+  }
+  .sidebar {
+    width: 100%;
+    display: flex;
+  }
+  .chat-area {
+    display: none;
+  }
+  .chat-area.active-mobile {
+    display: flex;
+    z-index: 999;
+  }
+}
     .profile-btn-group {
       display: flex;
       gap: 8px;
@@ -1222,23 +1242,26 @@ authSubmitBtn.addEventListener('click', handleAuthSubmit);
   });
 });
 
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        myClientId = user.uid;
-        DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
-        currentUsername = localStorage.getItem('chatsphere_username_' + myClientId) || (user.email ? user.email.split('@')[0] : 'User_' + myClientId.substr(-4));
-        myProfilePic = localStorage.getItem('chatsphere_profile_pic_' + myClientId) || DEFAULT_AVATAR;
+  auth.onAuthStateChanged((user) => {
+  if (user) {
+    myClientId = user.uid;
+    DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
+    currentUsername = localStorage.getItem('chatsphere_username_' + myClientId) || (user.email ? user.email.split('@')[0] : 'User_' + myClientId.substr(-4));
+    myProfilePic = localStorage.getItem('chatsphere_profile_pic_' + myClientId) || DEFAULT_AVATAR;
 
-        displayMyUsername.textContent = currentUsername;
-        myProfileImg.src = myProfilePic;
+    displayMyUsername.textContent = currentUsername;
+    myProfileImg.src = myProfilePic;
 
-        authOverlay.classList.add('hidden');
-        initGlobalPresence();
-        listenAllUnreadMessages();
-      } else {
-        authOverlay.classList.remove('hidden');
-      }
-    });
+    // Login Overlay ကို ပိတ်ပြီး Chat UI ကို ပြသပေးခြင်း
+    authOverlay.classList.add('hidden');
+    chatArea.classList.remove('active-mobile'); // Mobile View အတွက် Sidebar ကို စတင်ပြသရန်
+    
+    initGlobalPresence();
+    listenAllUnreadMessages();
+  } else {
+    authOverlay.classList.remove('hidden');
+  }
+});
 
     /* Custom Stylish Alert Functions */
     function showCustomAlert(title, message, icon = '🚫') {
