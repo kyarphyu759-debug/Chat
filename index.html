@@ -10,6 +10,30 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Chat App</title>
   <style>
+    :root {
+      --bg-body: #0f172a;
+      --bg-card: #1e293b;
+      --bg-header: #0f172a;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --accent: #38bdf8;
+      --msg-bg: #334155;
+      --input-bg: #1e293b;
+    }
+
+    body.light-theme {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-header: #e2e8f0;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-sub: #64748b;
+      --accent: #0284c7;
+      --msg-bg: #e2e8f0;
+      --input-bg: #f8fafc;
+    }
+
     * { 
       box-sizing: border-box; 
       margin: 0; 
@@ -22,9 +46,10 @@
       height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background-color: #0f172a; 
-      color: #f8fafc; 
+      background-color: var(--bg-body); 
+      color: var(--text-main); 
       -webkit-tap-highlight-color: transparent; 
+      transition: background-color 0.3s, color 0.3s;
     }
 
     body {
@@ -35,12 +60,41 @@
 
     .hidden { display: none !important; }
 
+    /* Auth Screen Overlay */
+    #auth-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100dvh;
+      background: var(--bg-body);
+      z-index: 9999;
+      display: flex; justify-content: center; align-items: center;
+      padding: 1rem;
+    }
+    .auth-card {
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 12px;
+      width: 100%; max-width: 380px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .auth-card h2 { color: var(--accent); margin-bottom: 1.2rem; text-align: center; font-size: 1.4rem; }
+    .auth-card input {
+      width: 100%; padding: 0.75rem; margin-bottom: 0.8rem;
+      border: 1px solid var(--border-color); border-radius: 8px;
+      background: var(--bg-body); color: var(--text-main); outline: none;
+    }
+    .auth-card button {
+      width: 100%; padding: 0.75rem; background: #2563eb; color: white;
+      border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 0.5rem;
+    }
+    .auth-toggle { margin-top: 1rem; font-size: 0.85rem; color: var(--text-sub); text-align: center; cursor: pointer; text-decoration: underline; }
+
     #chat-app { 
       display: flex; 
       width: 100vw; 
       height: 100dvh; 
       max-width: 1100px; 
-      background: #1e293b; 
+      background: var(--bg-card); 
       overflow: hidden; 
       position: relative; 
     }
@@ -57,10 +111,10 @@
     /* Sidebar */
     .sidebar { 
       width: 100%; 
-      background: #0f172a; 
+      background: var(--bg-header); 
       padding: 1rem; 
       padding-top: calc(1rem + env(safe-area-inset-top));
-      border-right: 1px solid #334155; 
+      border-right: 1px solid var(--border-color); 
       display: flex; 
       flex-direction: column; 
       z-index: 2; 
@@ -70,31 +124,39 @@
       .sidebar { width: 320px; padding-top: 1rem; }
     }
     
+    .sidebar-top-bar {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;
+    }
+    .theme-toggle-btn {
+      background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; color: var(--text-main);
+    }
+
     /* Profile Card Design */
     .my-profile-info { 
-      background: #1e293b; 
+      background: var(--bg-card); 
       padding: 0.8rem 1rem; 
       border-radius: 8px; 
       margin-bottom: 1rem; 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
-      border: 1px solid #334155; 
+      border: 1px solid var(--border-color); 
       cursor: pointer;
       transition: background 0.2s ease, border-color 0.2s ease;
       touch-action: manipulation;
     }
     .my-profile-info:hover {
-      background: #334155;
-      border-color: #38bdf8;
+      background: var(--border-color);
+      border-color: var(--accent);
     }
     .my-profile-left {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-    .my-profile-info h4 { color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    .my-profile-info p { color: #38bdf8; font-weight: bold; font-size: 1rem; }
+    .my-profile-info h4 { color: var(--text-sub); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .my-profile-info p { color: var(--accent); font-weight: bold; font-size: 1rem; }
+    .logout-btn-icon { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 4px; }
 
     /* Profile Avatars General */
     .avatar-img {
@@ -102,8 +164,8 @@
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid #38bdf8;
-      background: #334155;
+      border: 2px solid var(--accent);
+      background: var(--border-color);
       flex-shrink: 0;
     }
     .avatar-img.small {
@@ -117,7 +179,7 @@
     }
 
     .users-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    .users-list h3 { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+    .users-list h3 { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
     
     .user-item { 
       display: flex; 
@@ -125,7 +187,7 @@
       justify-content: space-between; 
       margin-bottom: 0.5rem; 
       font-size: 0.95rem; 
-      background: #1e293b; 
+      background: var(--bg-card); 
       padding: 10px 14px; 
       border-radius: 8px; 
       cursor: pointer; 
@@ -133,11 +195,11 @@
       border: 1px solid transparent; 
       touch-action: manipulation;
     }
-    .user-item:hover { background: #334155; }
-    .user-item.active { background: #1e3a8a; border-color: #38bdf8; }
+    .user-item:hover { background: var(--border-color); }
+    .user-item.active { background: #1e3a8a; border-color: var(--accent); }
     .user-item.pinned {
-      border-left: 3px solid #38bdf8;
-      background: #0f2942;
+      border-left: 3px solid var(--accent);
+      background: rgba(56, 189, 248, 0.1);
     }
 
     .user-right-group {
@@ -160,7 +222,7 @@
     .pin-btn {
       background: none;
       border: none;
-      color: #64748b;
+      color: var(--text-sub);
       font-size: 1rem;
       cursor: pointer;
       padding: 2px 6px;
@@ -169,14 +231,14 @@
       touch-action: manipulation;
     }
     .pin-btn:hover, .pin-btn.active {
-      color: #38bdf8;
+      color: var(--accent);
       transform: scale(1.15);
     }
     
     .user-info-group { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-    .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9; }
+    .user-name { font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: var(--text-main); }
     .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 6px #22c55e; flex-shrink: 0; }
-    .status-dot.offline { background: #94a3b8; box-shadow: none; }
+    .status-dot.offline { background: var(--text-sub); box-shadow: none; }
 
     /* Chat Area */
     .chat-area { 
@@ -188,7 +250,7 @@
       left: 0; 
       width: 100%; 
       height: 100%; 
-      background: #1e293b; 
+      background: var(--bg-card); 
       z-index: 1; 
       transition: transform 0.3s ease; 
     }
@@ -202,31 +264,31 @@
     .chat-header { 
       padding: 0.8rem 1rem; 
       padding-top: calc(0.8rem + env(safe-area-inset-top));
-      background: #0f172a; 
-      border-bottom: 1px solid #334155; 
+      background: var(--bg-header); 
+      border-bottom: 1px solid var(--border-color); 
       display: flex; 
       align-items: center; 
       gap: 10px; 
       position: relative; 
     }
-    .back-btn { background: none; border: none; color: #38bdf8; font-size: 1.3rem; cursor: pointer; display: block; padding: 0 5px; touch-action: manipulation; }
+    .back-btn { background: none; border: none; color: var(--accent); font-size: 1.3rem; cursor: pointer; display: block; padding: 0 5px; touch-action: manipulation; }
     @media (min-width: 768px) { .back-btn { display: none; } }
 
-    .target-title { font-size: 0.95rem; font-weight: bold; color: #f8fafc; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
+    .target-title { font-size: 0.95rem; font-weight: bold; color: var(--text-main); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
 
     .header-right-group { display: flex; align-items: center; gap: 12px; }
     .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
-    .online-badge.offline { color: #94a3b8; }
+    .online-badge.offline { color: var(--text-sub); }
 
-    .chat-menu-btn { background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; touch-action: manipulation; }
-    .chat-menu-btn:hover { color: #f8fafc; background: #334155; }
+    .chat-menu-btn { background: none; border: none; color: var(--text-sub); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; touch-action: manipulation; }
+    .chat-menu-btn:hover { color: var(--text-main); background: var(--border-color); }
 
     .chat-dropdown-menu {
       position: absolute;
       top: 100%;
       right: 1rem;
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: var(--bg-header);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       z-index: 100;
@@ -238,7 +300,7 @@
     .chat-dropdown-menu button {
       background: none;
       border: none;
-      color: #f8fafc;
+      color: var(--text-main);
       padding: 12px 14px;
       text-align: left;
       font-size: 0.9rem;
@@ -248,7 +310,7 @@
       gap: 10px;
       touch-action: manipulation;
     }
-    .chat-dropdown-menu button:hover { background: #334155; }
+    .chat-dropdown-menu button:hover { background: var(--border-color); }
 
     .messages-container { 
       flex: 1; 
@@ -259,7 +321,7 @@
       display: flex; 
       flex-direction: column; 
       gap: 0.75rem; 
-      background: #1e293b; 
+      background: var(--bg-card); 
       background-size: cover; 
       background-position: center; 
     }
@@ -268,7 +330,7 @@
       max-width: 80%; 
       padding: 0.65rem 0.95rem; 
       border-radius: 14px; 
-      background: #334155; 
+      background: var(--msg-bg); 
       align-self: flex-start; 
       word-break: break-word;
       overflow-wrap: anywhere; 
@@ -280,9 +342,9 @@
       touch-action: manipulation;
     }
     @media (min-width: 768px) { .message { max-width: 65%; } }
-    .message.mine { background: #2563eb; align-self: flex-end; }
+    .message.mine { background: #2563eb; color: white; align-self: flex-end; }
     
-    .msg-meta { font-size: 0.72rem; color: #cbd5e1; margin-bottom: 0.2rem; display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; }
+    .msg-meta { font-size: 0.72rem; opacity: 0.85; margin-bottom: 0.2rem; display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; }
     .msg-time { opacity: 0.75; display: flex; align-items: center; gap: 3px; }
     
     .read-status { font-weight: bold; font-size: 0.8rem; }
@@ -298,10 +360,10 @@
     .in-chat-typing {
       align-self: flex-start;
       font-size: 0.8rem;
-      color: #38bdf8;
+      color: var(--accent);
       font-style: italic;
       padding: 4px 10px;
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.4);
       border-radius: 12px;
       margin-top: 4px;
       display: inline-flex;
@@ -324,7 +386,7 @@
       background: rgba(0,0,0,0.2);
       padding: 8px 12px;
       border-radius: 6px;
-      color: #38bdf8;
+      color: var(--accent);
       text-decoration: none;
       font-size: 0.85rem;
       margin-top: 4px;
@@ -345,7 +407,7 @@
     }
     .reaction-badge {
       background: rgba(15, 23, 42, 0.7);
-      border: 1px solid #475569;
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 2px 7px;
       font-size: 0.75rem;
@@ -356,40 +418,40 @@
       backdrop-filter: blur(4px);
     }
     .reaction-badge.my-reaction {
-      border-color: #38bdf8;
+      border-color: var(--accent);
       background: rgba(30, 58, 138, 0.8);
     }
 
     .reply-quote {
-      background: rgba(0, 0, 0, 0.2);
-      border-left: 3px solid #38bdf8;
+      background: rgba(0, 0, 0, 0.15);
+      border-left: 3px solid var(--accent);
       padding: 4px 8px;
       border-radius: 4px;
       margin-bottom: 6px;
       font-size: 0.78rem;
-      color: #e2e8f0;
     }
-    .reply-quote strong { color: #38bdf8; display: block; font-size: 0.7rem; }
+    .reply-quote strong { color: var(--accent); display: block; font-size: 0.7rem; }
 
     .input-wrapper { 
-      background: #0f172a; 
-      border-top: 1px solid #334155; 
+      background: var(--bg-header); 
+      border-top: 1px solid var(--border-color); 
       display: flex; 
       flex-direction: column; 
       padding-bottom: env(safe-area-inset-bottom);
       width: 100%;
+      position: relative;
     }
     
     .reply-preview-bar {
-      background: #1e293b;
+      background: var(--bg-card);
       padding: 8px 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-left: 4px solid #38bdf8;
+      border-left: 4px solid var(--accent);
       font-size: 0.8rem;
     }
-    .reply-preview-content { color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
+    .reply-preview-content { color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; }
     .close-reply-btn { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 2px 6px; }
 
     .input-area { padding: 0.75rem 0.5rem; display: flex; gap: 6px; align-items: center; width: 100%; }
@@ -397,15 +459,15 @@
       flex: 1; 
       min-width: 0;
       padding: 0.75rem 0.8rem; 
-      border: 1px solid #334155; 
+      border: 1px solid var(--border-color); 
       border-radius: 8px; 
-      background: #1e293b; 
-      color: #fff; 
+      background: var(--input-bg); 
+      color: var(--text-main); 
       font-size: 15px; 
       outline: none; 
     }
-    input[type="text"]:focus { border-color: #38bdf8; }
-    input[type="text"]:disabled { background: #0f172a; cursor: not-allowed; opacity: 0.6; }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]:disabled { opacity: 0.6; cursor: not-allowed; }
     
     .action-icon-btn {
       background: none;
@@ -414,7 +476,7 @@
       cursor: pointer;
       padding: 6px;
       border-radius: 50%;
-      color: #94a3b8;
+      color: var(--text-sub);
       transition: color 0.2s, background 0.2s;
       display: flex;
       align-items: center;
@@ -422,9 +484,38 @@
       touch-action: manipulation;
       flex-shrink: 0;
     }
-    .action-icon-btn:hover:not(:disabled) { color: #38bdf8; background: #334155; }
+    .action-icon-btn:hover:not(:disabled) { color: var(--accent); background: var(--border-color); }
     .action-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .action-icon-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
+
+    /* Emoji Picker Container */
+    .emoji-picker-popover {
+      position: absolute;
+      bottom: 100%;
+      left: 10px;
+      margin-bottom: 8px;
+      background: var(--bg-header);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      z-index: 500;
+    }
+    .emoji-picker-popover span {
+      font-size: 1.4rem;
+      text-align: center;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: transform 0.1s, background 0.1s;
+    }
+    .emoji-picker-popover span:hover {
+      transform: scale(1.25);
+      background: var(--border-color);
+    }
 
     @keyframes pulse {
       0% { transform: scale(1); }
@@ -446,13 +537,13 @@
     }
     button.send-btn:disabled { background: #475569; opacity: 0.5; cursor: not-allowed; }
 
-    .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
+    .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: var(--text-sub); font-size: 0.95rem; text-align: center; padding: 1rem; }
 
-    /* Context Menu & Reactions Bar (Responsive fixed) */
+    /* Context Menu */
     .context-menu {
       position: fixed;
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: var(--bg-header);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.6);
       z-index: 2000;
@@ -467,8 +558,8 @@
       display: flex;
       justify-content: space-around;
       padding: 10px 6px;
-      background: #1e293b;
-      border-bottom: 1px solid #334155;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
     }
     .reaction-picker span {
       font-size: 1.35rem;
@@ -480,12 +571,12 @@
     }
     .reaction-picker span:hover {
       transform: scale(1.3);
-      background: #334155;
+      background: var(--border-color);
     }
     .context-menu button {
       background: none;
       border: none;
-      color: #f8fafc;
+      color: var(--text-main);
       padding: 12px 14px;
       text-align: left;
       font-size: 0.9rem;
@@ -495,7 +586,7 @@
       gap: 10px;
       touch-action: manipulation;
     }
-    .context-menu button:hover { background: #334155; }
+    .context-menu button:hover { background: var(--border-color); }
     .context-menu button.danger { color: #ef4444; }
 
     /* Custom Stylish Alert Modal */
@@ -515,12 +606,12 @@
     .alert-title {
       font-size: 1.2rem;
       font-weight: bold;
-      color: #f8fafc;
+      color: var(--text-main);
       margin-bottom: 0.5rem;
     }
     .alert-message {
       font-size: 0.95rem;
-      color: #cbd5e1;
+      color: var(--text-sub);
       margin-bottom: 1.5rem;
       line-height: 1.4;
     }
@@ -538,9 +629,9 @@
       pointer-events: none;
     }
     .toast-message {
-      background: rgba(30, 41, 59, 0.95);
-      color: #f8fafc;
-      border: 1px solid #38bdf8;
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
       padding: 10px 18px;
       border-radius: 30px;
       font-size: 0.9rem;
@@ -568,14 +659,13 @@
 
     /* Modals System */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0, 0, 0, 0.75); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
-    .modal-card { background: #1e293b; padding: 1.5rem; border-radius: 14px; width: 90%; max-width: 400px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal-card h3 { color: #38bdf8; margin-bottom: 1rem; font-size: 1.1rem; }
-    .modal-card label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.4rem; }
+    .modal-card { background: var(--bg-card); padding: 1.5rem; border-radius: 14px; width: 90%; max-width: 400px; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .modal-card h3 { color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; }
+    .modal-card label { display: block; font-size: 0.85rem; color: var(--text-sub); margin-bottom: 0.4rem; }
     .modal-actions { display: flex; gap: 10px; margin-top: 1.2rem; }
     .btn-primary { flex: 1; background:#2563eb; color:white; border:none; padding:0.65rem; border-radius:8px; font-weight:600; cursor:pointer; }
-    .cancel-btn { background: #475569; border: none; color: white; padding: 0.65rem; border-radius: 8px; cursor: pointer; flex: 1; }
+    .cancel-btn { background: var(--border-color); border: none; color: var(--text-main); padding: 0.65rem; border-radius: 8px; cursor: pointer; flex: 1; }
 
-    /* Profile Image Selector Modal UI */
     .profile-upload-section {
       display: flex;
       flex-direction: column;
@@ -583,15 +673,15 @@
       gap: 12px;
       margin-bottom: 1.2rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid #334155;
+      border-bottom: 1px solid var(--border-color);
     }
     .profile-preview-large {
       width: 80px;
       height: 80px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid #38bdf8;
-      background: #0f172a;
+      border: 3px solid var(--accent);
+      background: var(--bg-header);
     }
     .profile-btn-group {
       display: flex;
@@ -605,17 +695,16 @@
       cursor: pointer;
       font-weight: bold;
     }
-    .btn-upload { background: #38bdf8; color: #0f172a; }
+    .btn-upload { background: var(--accent); color: #0f172a; }
     .btn-delete { background: #ef4444; color: white; }
 
-    /* Custom Toggle Switch for Online Status */
     .toggle-group {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-top: 1rem;
       padding-top: 0.8rem;
-      border-top: 1px solid #334155;
+      border-top: 1px solid var(--border-color);
     }
     .toggle-group label { margin-bottom: 0; cursor: pointer; }
     .switch {
@@ -627,7 +716,7 @@
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
       position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #475569; transition: .3s; border-radius: 24px;
+      background-color: var(--border-color); transition: .3s; border-radius: 24px;
     }
     .slider:before {
       position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
@@ -636,7 +725,6 @@
     input:checked + .slider { background-color: #ef4444; }
     input:checked + .slider:before { transform: translateX(22px); }
 
-    /* Theme Color Circles & Upload Section */
     .theme-circles { display: flex; gap: 12px; margin-bottom: 1.2rem; justify-content: space-between; flex-wrap: wrap; }
     .color-circle {
       width: 42px;
@@ -646,29 +734,46 @@
       border: 2px solid transparent;
       transition: transform 0.2s, border-color 0.2s;
     }
-    .color-circle:hover, .color-circle.selected { transform: scale(1.15); border-color: #38bdf8; }
+    .color-circle:hover, .color-circle.selected { transform: scale(1.15); border-color: var(--accent); }
     
     .upload-box {
-      border: 2px dashed #475569;
+      border: 2px dashed var(--border-color);
       border-radius: 8px;
       padding: 1rem;
       text-align: center;
       cursor: pointer;
-      background: #0f172a;
+      background: var(--bg-header);
       transition: border-color 0.2s;
       margin-bottom: 1rem;
     }
-    .upload-box:hover { border-color: #38bdf8; }
-    .upload-box p { font-size: 0.85rem; color: #94a3b8; }
+    .upload-box:hover { border-color: var(--accent); }
+    .upload-box p { font-size: 0.85rem; color: var(--text-sub); }
     .color-picker-row { display: flex; align-items: center; gap: 10px; margin-top: 0.5rem; }
     .color-picker-row input[type="color"] { border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; background: none; }
   </style>
 </head>
 <body>
 
+  <!-- Auth Screen (Sign-In / Register) -->
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <h2 id="auth-title">အကောင့်ဝင်ရောက်ပါ</h2>
+      <input type="email" id="auth-email" placeholder="အီးမေးလ် ရိုက်ထည့်ပါ..." autocomplete="off" />
+      <input type="password" id="auth-password" placeholder="စကားဝှက် ရိုက်ထည့်ပါ..." />
+      <button type="button" id="auth-submit-btn">အကောင့်ဝင်မည်</button>
+      <div class="auth-toggle" id="auth-toggle-btn">အကောင့်မရှိသေးပါက ဒီမှာ အသစ်ဖွင့်ပါ</div>
+    </div>
+  </div>
+
   <div id="chat-app">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
+      <div class="sidebar-top-bar">
+        <span style="font-weight: bold; color: var(--accent);">CHAT APP</span>
+        <!-- Dark / Light Mode Switcher -->
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode">🌙</button>
+      </div>
+
       <!-- Clickable Profile Card -->
       <div class="my-profile-info" id="open-profile-btn" title="Click to Edit Profile">
         <div class="my-profile-left">
@@ -678,12 +783,13 @@
             <p id="display-my-username">Guest</p>
           </div>
         </div>
+        <button class="logout-btn-icon" id="auth-logout-btn" title="Sign Out">🚪</button>
       </div>
       
       <div class="users-list">
         <h3>
           <span>GLOBAL ONLINE USERS</span>
-          <span id="user-count" style="color:#38bdf8;">0</span>
+          <span id="user-count" style="color:var(--accent);">0</span>
         </h3>
         <div id="users-container"></div>
       </div>
@@ -719,10 +825,21 @@
           <div class="reply-preview-content" id="reply-preview-text"></div>
           <button class="close-reply-btn" id="cancel-reply-btn">✕</button>
         </div>
+
+        <!-- Emoji Picker Popover -->
+        <div class="emoji-picker-popover hidden" id="emoji-picker">
+          <span>😀</span><span>😂</span><span>😍</span><span>👍</span><span>❤️</span><span>🎉</span>
+          <span>🙏</span><span>🔥</span><span>😎</span><span>😢</span><span>😮</span><span>✨</span>
+          <span>💯</span><span>👏</span><span>😊</span><span>🥳</span><span>👀</span><span>💩</span>
+        </div>
+
         <form class="input-area" id="chat-form">
           <!-- File Attachments Input -->
           <button type="button" class="action-icon-btn" id="file-attach-btn" title="Send Image/File">📁</button>
           <input type="file" id="file-input" class="hidden" accept="image/*,application/pdf,.doc,.docx,.zip" />
+
+          <!-- Emoji Picker Trigger Button -->
+          <button type="button" class="action-icon-btn" id="emoji-btn" title="Insert Emoji">😊</button>
 
           <input type="text" id="message-input" placeholder="စာတို ရိုက်ထည့်ပါ..." autocomplete="off" />
           
@@ -779,13 +896,13 @@
       </div>
 
       <label>User Name</label>
-      <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required />
+      <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main);" />
       
       <!-- Hide Online Status Toggle Switch -->
       <div class="toggle-group">
         <div>
-          <label style="color:#f8fafc; font-weight:600;">Online Status ပိတ်မည်</label>
-          <p style="font-size:0.75rem; color:#94a3b8;">Online ပြမနေတော့ဘဲ စာပို့မှ အမှန်ခြစ်နှစ်ခုပြပါမည်</p>
+          <label style="color:var(--text-main); font-weight:600;">Online Status ပိတ်မည်</label>
+          <p style="font-size:0.75rem; color:var(--text-sub);">Online ပြမနေတော့ဘဲ စာပို့မှ အမှန်ခြစ်နှစ်ခုပြပါမည်</p>
         </div>
         <label class="switch">
           <input type="checkbox" id="hide-online-toggle">
@@ -805,7 +922,7 @@
     <div class="modal-card">
       <h3 id="nickname-modal-title">Nickname သတ်မှတ်ရန်</h3>
       <label>ပေးလိုသော Nickname</label>
-      <input type="text" id="nickname-input" placeholder="Nickname ရိုက်ထည့်ပါ..." autocomplete="off" />
+      <input type="text" id="nickname-input" placeholder="Nickname ရိုက်ထည့်ပါ..." autocomplete="off" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main);" />
       <div class="modal-actions">
         <button type="button" id="save-nickname-btn" class="btn-primary">Save</button>
         <button type="button" id="close-nickname-btn" class="cancel-btn">Cancel</button>
@@ -867,16 +984,11 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    let myClientId = localStorage.getItem('chatsphere_client_id');
-    if (!myClientId) {
-      myClientId = 'usr_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('chatsphere_client_id', myClientId);
-    }
-
-    const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
-    let currentUsername = localStorage.getItem('chatsphere_username') || ('Guest_' + myClientId.substr(-4));
-    let myProfilePic = localStorage.getItem('chatsphere_profile_pic') || DEFAULT_AVATAR;
-    let tempModalPic = myProfilePic;
+    let myClientId = null;
+    let DEFAULT_AVATAR = "";
+    let currentUsername = "";
+    let myProfilePic = "";
+    let tempModalPic = "";
 
     let hideOnlineStatus = localStorage.getItem('chatsphere_hide_online') === 'true'; 
     let selectedTargetUser = null; 
@@ -950,6 +1062,19 @@
     let isRecording = false;
 
     // DOM Elements
+    const authOverlay = document.getElementById('auth-overlay');
+    const authTitle = document.getElementById('auth-title');
+    const authEmail = document.getElementById('auth-email');
+    const authPassword = document.getElementById('auth-password');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const authToggleBtn = document.getElementById('auth-toggle-btn');
+    const authLogoutBtn = document.getElementById('auth-logout-btn');
+    let isRegistering = false;
+
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const emojiBtn = document.getElementById('emoji-btn');
+    const emojiPicker = document.getElementById('emoji-picker');
+
     const displayMyUsername = document.getElementById('display-my-username');
     const myProfileImg = document.getElementById('my-profile-img');
     const usersContainer = document.getElementById('users-container');
@@ -1017,6 +1142,95 @@
     const menuChangeBg = document.getElementById('menu-change-bg');
     const menuBlockUser = document.getElementById('menu-block-user');
 
+    /* DARK / LIGHT THEME TOGGLE */
+    if (localStorage.getItem('chatsphere_theme') === 'light') {
+      document.body.classList.add('light-theme');
+      themeToggleBtn.textContent = '☀️';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      const isLight = document.body.classList.contains('light-theme');
+      themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
+      localStorage.setItem('chatsphere_theme', isLight ? 'light' : 'dark');
+    });
+
+    /* EMOJI PICKER HANDLER */
+    emojiBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      emojiPicker.classList.toggle('hidden');
+    });
+
+    emojiPicker.querySelectorAll('span').forEach(el => {
+      el.addEventListener('click', () => {
+        messageInput.value += el.textContent;
+        emojiPicker.classList.add('hidden');
+        messageInput.focus();
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+        emojiPicker.classList.add('hidden');
+      }
+    });
+
+    /* AUTHENTICATION SYSTEM LOGIC */
+    authToggleBtn.addEventListener('click', () => {
+      isRegistering = !isRegistering;
+      authTitle.textContent = isRegistering ? "အကောင့်အသစ်ပြုလုပ်ပါ" : "အကောင့်ဝင်ရောက်ပါ";
+      authSubmitBtn.textContent = isRegistering ? "Register ပြုလုပ်မည်" : "အကောင့်ဝင်မည်";
+      authToggleBtn.textContent = isRegistering ? "အကောင့်ရှိပြီးသားပါက ဒီမှာဝင်ပါ" : "အကောင့်မရှိသေးပါက ဒီမှာ အသစ်ဖွင့်ပါ";
+    });
+
+    authSubmitBtn.addEventListener('click', async () => {
+      const email = authEmail.value.trim();
+      const password = authPassword.value.trim();
+
+      if (!email || !password) {
+        showCustomAlert("အချက်အလက် လိုအပ်ပါသည်", "အီးမေးလ်နှင့် စကားဝှက်ကို ပြည့်စုံစွာ ဖြည့်ပါ", "⚠️");
+        return;
+      }
+
+      try {
+        if (isRegistering) {
+          await auth.createUserWithEmailAndPassword(email, password);
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+        }
+      } catch (err) {
+        showCustomAlert("Auth Error", err.message, "⚠️");
+      }
+    });
+
+    authLogoutBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm("အကောင့်ထဲမှ ထွက်ခွာရန် သေချာပါသလား?")) {
+        if (myClientId) {
+          db.ref(`global_online_users/${myClientId}`).remove();
+        }
+        auth.signOut();
+      }
+    });
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        myClientId = user.uid;
+        DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
+        currentUsername = localStorage.getItem('chatsphere_username_' + myClientId) || (user.email ? user.email.split('@')[0] : 'User_' + myClientId.substr(-4));
+        myProfilePic = localStorage.getItem('chatsphere_profile_pic_' + myClientId) || DEFAULT_AVATAR;
+
+        displayMyUsername.textContent = currentUsername;
+        myProfileImg.src = myProfilePic;
+
+        authOverlay.classList.add('hidden');
+        initGlobalPresence();
+        listenAllUnreadMessages();
+      } else {
+        authOverlay.classList.remove('hidden');
+      }
+    });
+
     /* Custom Stylish Alert Functions */
     function showCustomAlert(title, message, icon = '🚫') {
       alertIcon.textContent = icon;
@@ -1054,26 +1268,11 @@
           messagesContainer.style.backgroundImage = 'none';
         }
       } else {
-        messagesContainer.style.background = '#1e293b';
+        messagesContainer.style.background = 'var(--bg-card)';
         messagesContainer.style.backgroundImage = 'none';
       }
     }
     applySavedBackground();
-
-    // STARTUP
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        if (!auth.currentUser) {
-          await auth.signInAnonymously();
-        }
-        displayMyUsername.textContent = currentUsername;
-        myProfileImg.src = myProfilePic;
-        initGlobalPresence();
-        listenAllUnreadMessages();
-      } catch (error) {
-        console.error("Auth Error:", error);
-      }
-    });
 
     backToUsersBtn.addEventListener('click', () => {
       chatArea.classList.remove('active-mobile');
@@ -1218,6 +1417,7 @@
 
     // PRESENCE SYSTEM
     function initGlobalPresence() {
+      if (!myClientId) return;
       const globalPresenceRef = db.ref(`global_online_users/${myClientId}`);
       const connectedRef = db.ref('.info/connected');
 
@@ -1256,6 +1456,7 @@
 
     // GLOBAL UNREAD MESSAGES LISTENER
     function listenAllUnreadMessages() {
+      if (!myClientId) return;
       db.ref('direct_messages').on('value', (snapshot) => {
         const allRooms = snapshot.val() || {};
         unreadCounts = {};
@@ -1294,7 +1495,7 @@
         if (user.id === myClientId) return false; 
 
         const cleanName = (user.name || '').trim();
-        if (!cleanName || cleanName.length <= 1 || cleanName === "Guest") return false;
+        if (!cleanName || cleanName.length <= 1) return false;
 
         const isActuallyOnline = user.online === true && !user.hideOnline;
         const timeDiff = now - (user.lastSeen || 0);
@@ -1899,8 +2100,8 @@
       currentUsername = newUsername;
       myProfilePic = tempModalPic;
 
-      localStorage.setItem('chatsphere_username', currentUsername);
-      localStorage.setItem('chatsphere_profile_pic', myProfilePic);
+      localStorage.setItem('chatsphere_username_' + myClientId, currentUsername);
+      localStorage.setItem('chatsphere_profile_pic_' + myClientId, myProfilePic);
 
       displayMyUsername.textContent = currentUsername;
       myProfileImg.src = myProfilePic;
