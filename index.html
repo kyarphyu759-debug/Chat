@@ -402,6 +402,7 @@
       outline: none; 
     }
     input[type="text"]:focus { border-color: #38bdf8; }
+    input[type="text"]:disabled { background: #0f172a; cursor: not-allowed; opacity: 0.6; }
     
     .action-icon-btn {
       background: none;
@@ -417,7 +418,8 @@
       justify-content: center;
       touch-action: manipulation;
     }
-    .action-icon-btn:hover { color: #38bdf8; background: #334155; }
+    .action-icon-btn:hover:not(:disabled) { color: #38bdf8; background: #334155; }
+    .action-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .action-icon-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
 
     @keyframes pulse {
@@ -437,6 +439,7 @@
       cursor: pointer; 
       touch-action: manipulation;
     }
+    button.send-btn:disabled { background: #475569; opacity: 0.5; cursor: not-allowed; }
 
     .no-chat-selected { display: flex; height: 100%; justify-content: center; align-items: center; color: #64748b; font-size: 0.95rem; text-align: center; padding: 1rem; }
 
@@ -627,6 +630,8 @@
         <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
           <button id="menu-set-nickname">✏️ Set nickname</button>
           <button id="menu-change-bg">🎨 Change background</button>
+          <!-- Block Button -->
+          <button id="menu-block-user" style="color: #ef4444;">🚫 Block User</button>
         </div>
       </div>
 
@@ -649,7 +654,7 @@
           <!-- Audio Mic Record Button -->
           <button type="button" class="action-icon-btn" id="mic-btn" title="Voice Message">🎙️</button>
           
-          <button type="submit" class="send-btn">Send</button>
+          <button type="submit" class="send-btn" id="send-btn">Send</button>
         </form>
       </div>
     </div>
@@ -845,6 +850,7 @@
 
     let nicknames = getStoredObject('chatsphere_nicknames');
     let pinnedUsers = getStoredObject('chatsphere_pinned_users');
+    let blockedUsers = getStoredObject('chatsphere_blocked_users');
     let latestUsersList = [];
 
     // Active Action Variables
@@ -872,6 +878,7 @@
     const inputWrapper = document.getElementById('input-wrapper');
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
     const chatArea = document.getElementById('chat-area');
     const backToUsersBtn = document.getElementById('back-to-users-btn');
 
@@ -917,6 +924,7 @@
     const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
     const menuSetNickname = document.getElementById('menu-set-nickname');
     const menuChangeBg = document.getElementById('menu-change-bg');
+    const menuBlockUser = document.getElementById('menu-block-user');
 
     // Apply Saved Background
     function applySavedBackground() {
@@ -959,7 +967,52 @@
     chatMenuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       chatDropdownMenu.classList.toggle('hidden');
+      if (selectedTargetUser) {
+        const isBlocked = !!blockedUsers[selectedTargetUser.id];
+        menuBlockUser.textContent = isBlocked ? "✅ Unblock User" : "🚫 Block User";
+      }
     });
+
+    // Block User Logic
+    menuBlockUser.addEventListener('click', () => {
+      chatDropdownMenu.classList.add('hidden');
+      if (!selectedTargetUser) return;
+
+      const targetId = selectedTargetUser.id;
+      if (blockedUsers[targetId]) {
+        delete blockedUsers[targetId];
+        alert(`"${selectedTargetUser.name}" ကို Unblock လုပ်ပြီးပါပြီ။`);
+      } else {
+        blockedUsers[targetId] = true;
+        alert(`"${selectedTargetUser.name}" ကို Block လိုက်ပါပြီ။ ဘာစာမှ ပို့၍ရတော့မည်မဟုတ်ပါ။`);
+      }
+
+      localStorage.setItem('chatsphere_blocked_users', JSON.stringify(blockedUsers));
+      updateInputAreaState();
+    });
+
+    function updateInputAreaState() {
+      if (!selectedTargetUser) return;
+
+      const isBlockedByMe = !!blockedUsers[selectedTargetUser.id];
+
+      if (isBlockedByMe) {
+        messageInput.disabled = true;
+        messageInput.value = '';
+        messageInput.placeholder = "သင်သည် ဤ User ကို Block ထားပါသည်။";
+        sendBtn.disabled = true;
+        fileAttachBtn.disabled = true;
+        micBtn.disabled = true;
+        activeReplyData = null;
+        replyPreviewBar.classList.add('hidden');
+      } else {
+        messageInput.disabled = false;
+        messageInput.placeholder = "စာတို ရိုက်ထည့်ပါ...";
+        sendBtn.disabled = false;
+        fileAttachBtn.disabled = false;
+        micBtn.disabled = false;
+      }
+    }
 
     // Custom Nickname Modal Logic
     menuSetNickname.addEventListener('click', () => {
@@ -1234,6 +1287,8 @@
       inputWrapper.classList.remove('hidden');
       chatArea.classList.add('active-mobile');
 
+      updateInputAreaState();
+
       document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
       listenDirectMessages();
       listenTypingStatus();
@@ -1246,7 +1301,7 @@
       typingRef = db.ref(`typing_status/${activeChatRoomId}/${selectedTargetUser.id}`);
       typingRef.on('value', (snapshot) => {
         let typingEl = document.getElementById('in-chat-typing-indicator');
-        if (snapshot.val() === true) {
+        if (snapshot.val() === true && !blockedUsers[selectedTargetUser.id]) {
           if (!typingEl) {
             typingEl = document.createElement('div');
             typingEl.id = 'in-chat-typing-indicator';
@@ -1266,7 +1321,7 @@
 
     // TYPING INPUT EVENT
     messageInput.addEventListener('input', () => {
-      if (!activeChatRoomId) return;
+      if (!activeChatRoomId || (selectedTargetUser && blockedUsers[selectedTargetUser.id])) return;
 
       db.ref(`typing_status/${activeChatRoomId}/${myClientId}`).set(true);
 
@@ -1291,6 +1346,10 @@
         const key = snapshot.key;
         const msg = snapshot.val();
 
+        if (blockedUsers[msg.senderId]) {
+          return;
+        }
+
         if (msg.senderId !== myClientId) {
           playSound('receive');
           sendNotification(msg.senderName, msg.type === 'image' ? '📷 Sent an image' : (msg.type === 'audio' ? '🎙️ Sent a voice note' : msg.text));
@@ -1314,6 +1373,8 @@
       messagesRef.on('child_changed', (snapshot) => {
         const key = snapshot.key;
         const msg = snapshot.val();
+        if (blockedUsers[msg.senderId]) return;
+
         const existingEl = document.getElementById(`msg-${key}`);
         if (existingEl) {
           const isMine = msg.senderId === myClientId;
@@ -1487,6 +1548,11 @@
 
     ctxReplyBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
+      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+        alert("Block ထားသောကြောင့် စာပြန်၍မရပါ။");
+        return;
+      }
+
       activeReplyData = {
         senderName: selectedMsgData.senderId === myClientId ? 'You' : selectedMsgData.senderName,
         text: selectedMsgData.text || (selectedMsgData.type ? `[${selectedMsgData.type}]` : '')
@@ -1504,6 +1570,11 @@
 
     ctxEditBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
+      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+        alert("Block ထားသောကြောင့် ပြင်ဆင်၍မရပါ။");
+        return;
+      }
+
       const newText = prompt("စာတိုကို ပြင်ဆင်ပါ:", selectedMsgData.text);
       if (newText !== null && newText.trim() !== "" && newText !== selectedMsgData.text) {
         db.ref(`direct_messages/${activeChatRoomId}/${selectedMsgKey}`).update({
@@ -1523,6 +1594,12 @@
     // SEND TEXT MESSAGE
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      
+      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+        alert("ဤ User ကို Block ထားသောကြောင့် စာပို့၍မရပါ။");
+        return;
+      }
+
       const text = messageInput.value.trim();
       if (!text || !activeChatRoomId) return;
 
@@ -1549,11 +1626,22 @@
     });
 
     // IMAGE & FILE SHARING HANDLER
-    fileAttachBtn.addEventListener('click', () => fileInput.click());
+    fileAttachBtn.addEventListener('click', () => {
+      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+        alert("ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။");
+        return;
+      }
+      fileInput.click();
+    });
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file || !activeChatRoomId) return;
+
+      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+        alert("ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။");
+        return;
+      }
 
       if (file.size > 2 * 1024 * 1024) {
         alert("ဖိုင် ပမာဏသည် 2MB ထက် မကျော်လွန်ရပါ!");
@@ -1590,6 +1678,11 @@
     // VOICE MESSAGE SYSTEM (MEDIA RECORDER API)
     micBtn.addEventListener('click', async () => {
       if (!activeChatRoomId) return;
+
+      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+        alert("ဤ User ကို Block ထားသောကြောင့် Voice Message ပို့၍မရပါ။");
+        return;
+      }
 
       if (!isRecording) {
         try {
