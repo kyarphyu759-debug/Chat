@@ -60,35 +60,6 @@
 
     .hidden { display: none !important; }
 
-    /* Auth Screen Overlay */
-    #auth-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100dvh;
-      background: var(--bg-body);
-      z-index: 9999;
-      display: flex; justify-content: center; align-items: center;
-      padding: 1rem;
-    }
-    .auth-card {
-      background: var(--bg-card);
-      padding: 2rem;
-      border-radius: 12px;
-      width: 100%; max-width: 380px;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    }
-    .auth-card h2 { color: var(--accent); margin-bottom: 1.2rem; text-align: center; font-size: 1.4rem; }
-    .auth-card input {
-      width: 100%; padding: 0.75rem; margin-bottom: 0.8rem;
-      border: 1px solid var(--border-color); border-radius: 8px;
-      background: var(--bg-body); color: var(--text-main); outline: none;
-    }
-    .auth-card button {
-      width: 100%; padding: 0.75rem; background: #2563eb; color: white;
-      border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 0.5rem;
-    }
-    .auth-toggle { margin-top: 1rem; font-size: 0.85rem; color: var(--text-sub); text-align: center; cursor: pointer; text-decoration: underline; }
-
     #chat-app { 
       display: flex; 
       width: 100vw; 
@@ -156,7 +127,6 @@
     }
     .my-profile-info h4 { color: var(--text-sub); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .my-profile-info p { color: var(--accent); font-weight: bold; font-size: 1rem; }
-    .logout-btn-icon { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 4px; }
 
     /* Profile Avatars General */
     .avatar-img {
@@ -685,24 +655,24 @@
     }
 
     /* Mobile view responsive styling for sidebar & chat switching */
-@media (max-width: 767px) {
-  #chat-app {
-    display: flex;
-    width: 100vw;
-    height: 100dvh;
-  }
-  .sidebar {
-    width: 100%;
-    display: flex;
-  }
-  .chat-area {
-    display: none;
-  }
-  .chat-area.active-mobile {
-    display: flex;
-    z-index: 999;
-  }
-}
+    @media (max-width: 767px) {
+      #chat-app {
+        display: flex;
+        width: 100vw;
+        height: 100dvh;
+      }
+      .sidebar {
+        width: 100%;
+        display: flex;
+      }
+      .chat-area {
+        display: none;
+      }
+      .chat-area.active-mobile {
+        display: flex;
+        z-index: 999;
+      }
+    }
     .profile-btn-group {
       display: flex;
       gap: 8px;
@@ -774,17 +744,6 @@
 </head>
 <body>
 
-  <!-- Auth Screen (Sign-In / Register) -->
-  <div id="auth-overlay">
-    <div class="auth-card">
-      <h2 id="auth-title">အကောင့်ဝင်ရောက်ပါ</h2>
-      <input type="email" id="auth-email" placeholder="အီးမေးလ် ရိုက်ထည့်ပါ..." autocomplete="off" />
-      <input type="password" id="auth-password" placeholder="စကားဝှက် ရိုက်ထည့်ပါ..." />
-      <button type="button" id="auth-submit-btn">အကောင့်ဝင်မည်</button>
-      <div class="auth-toggle" id="auth-toggle-btn">အကောင့်မရှိသေးပါက ဒီမှာ အသစ်ဖွင့်ပါ</div>
-    </div>
-  </div>
-
   <div id="chat-app">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -803,7 +762,6 @@
             <p id="display-my-username">Guest</p>
           </div>
         </div>
-        <button class="logout-btn-icon" id="auth-logout-btn" title="Sign Out">🚪</button>
       </div>
       
       <div class="users-list">
@@ -985,7 +943,6 @@
 
   <!-- FIREBASE SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <script>
@@ -1000,16 +957,19 @@
       measurementId: "G-TR1DR12NSV"
     };
 
-    
-
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.database();
 
-    let myClientId = null;
-    let DEFAULT_AVATAR = "";
-    let currentUsername = "";
-    let myProfilePic = "";
+    // Auto-generate or restore persistent device client ID
+    let myClientId = localStorage.getItem('chatsphere_device_id');
+    if (!myClientId) {
+      myClientId = 'user_' + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem('chatsphere_device_id', myClientId);
+    }
+
+    let DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
+    let currentUsername = localStorage.getItem('chatsphere_username_' + myClientId) || ('User_' + myClientId.substr(-4));
+    let myProfilePic = localStorage.getItem('chatsphere_profile_pic_' + myClientId) || DEFAULT_AVATAR;
     let tempModalPic = "";
 
     let hideOnlineStatus = localStorage.getItem('chatsphere_hide_online') === 'true'; 
@@ -1084,15 +1044,6 @@
     let isRecording = false;
 
     // DOM Elements
-    const authOverlay = document.getElementById('auth-overlay');
-    const authTitle = document.getElementById('auth-title');
-    const authEmail = document.getElementById('auth-email');
-    const authPassword = document.getElementById('auth-password');
-    const authSubmitBtn = document.getElementById('auth-submit-btn');
-    const authToggleBtn = document.getElementById('auth-toggle-btn');
-    const authLogoutBtn = document.getElementById('auth-logout-btn');
-    let isRegistering = false;
-
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const emojiBtn = document.getElementById('emoji-btn');
     const emojiPicker = document.getElementById('emoji-picker');
@@ -1164,6 +1115,14 @@
     const menuChangeBg = document.getElementById('menu-change-bg');
     const menuBlockUser = document.getElementById('menu-block-user');
 
+    /* INITIALIZE APP UI DIRECTLY */
+    displayMyUsername.textContent = currentUsername;
+    myProfileImg.src = myProfilePic;
+    chatArea.classList.remove('active-mobile');
+    
+    initGlobalPresence();
+    listenAllUnreadMessages();
+
     /* DARK / LIGHT THEME TOGGLE */
     if (localStorage.getItem('chatsphere_theme') === 'light') {
       document.body.classList.add('light-theme');
@@ -1196,72 +1155,6 @@
         emojiPicker.classList.add('hidden');
       }
     });
-
-    /* AUTHENTICATION SYSTEM LOGIC (UPDATED) */
-authToggleBtn.addEventListener('click', () => {
-  isRegistering = !isRegistering;
-  authTitle.textContent = isRegistering ? "အကောင့်အသစ်ပြုလုပ်ပါ" : "အကောင့်ဝင်ရောက်ပါ";
-  authSubmitBtn.textContent = isRegistering ? "Register ပြုလုပ်မည်" : "အကောင့်ဝင်မည်";
-  authToggleBtn.textContent = isRegistering ? "အကောင့်ရှိပြီးသားပါက ဒီမှာဝင်ပါ" : "အကောင့်မရှိသေးပါက ဒီမှာ အသစ်ဖွင့်ပါ";
-});
-
-// Main Auth Function
-const handleAuthSubmit = async (e) => {
-  if (e) e.preventDefault();
-  const email = authEmail.value.trim();
-  const password = authPassword.value.trim();
-
-  if (!email || !password) {
-    showCustomAlert("အချက်အလက် လိုအပ်ပါသည်", "အီးမေးလ်နှင့် စကားဝှက်ကို ပြည့်စုံစွာ ဖြည့်ပါ", "⚠️");
-    return;
-  }
-
-  // Disable button during process
-  authSubmitBtn.disabled = true;
-  authSubmitBtn.textContent = "ဆောင်ရွက်နေပါသည်...";
-
-  try {
-    if (isRegistering) {
-      await auth.createUserWithEmailAndPassword(email, password);
-    } else {
-      await auth.signInWithEmailAndPassword(email, password);
-    }
-  } catch (err) {
-    showCustomAlert("Auth Error", err.message, "⚠️");
-  } finally {
-    authSubmitBtn.disabled = false;
-    authSubmitBtn.textContent = isRegistering ? "Register ပြုလုပ်မည်" : "အကောင့်ဝင်မည်";
-  }
-};
-
-// Button Click & Enter Key Event Listeners
-authSubmitBtn.addEventListener('click', handleAuthSubmit);
-[authEmail, authPassword].forEach(input => {
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleAuthSubmit(e);
-  });
-});
-
-  auth.onAuthStateChanged((user) => {
-  if (user) {
-    myClientId = user.uid;
-    DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
-    currentUsername = localStorage.getItem('chatsphere_username_' + myClientId) || (user.email ? user.email.split('@')[0] : 'User_' + myClientId.substr(-4));
-    myProfilePic = localStorage.getItem('chatsphere_profile_pic_' + myClientId) || DEFAULT_AVATAR;
-
-    displayMyUsername.textContent = currentUsername;
-    myProfileImg.src = myProfilePic;
-
-    // Login Overlay ကို ပိတ်ပြီး Chat UI ကို ပြသပေးခြင်း
-    authOverlay.classList.add('hidden');
-    chatArea.classList.remove('active-mobile'); // Mobile View အတွက် Sidebar ကို စတင်ပြသရန်
-    
-    initGlobalPresence();
-    listenAllUnreadMessages();
-  } else {
-    authOverlay.classList.remove('hidden');
-  }
-});
 
     /* Custom Stylish Alert Functions */
     function showCustomAlert(title, message, icon = '🚫') {
@@ -1319,7 +1212,7 @@ authSubmitBtn.addEventListener('click', handleAuthSubmit);
       }
     });
 
-    // Block & Unblock User Logic with Beautiful UI
+    // Block & Unblock User Logic
     menuBlockUser.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
       if (!selectedTargetUser) return;
@@ -1847,7 +1740,7 @@ authSubmitBtn.addEventListener('click', handleAuthSubmit);
       messagesContainer.appendChild(msgDiv);
     }
 
-    // CONTEXT MENU (Mobile Bound Checking Fixed)
+    // CONTEXT MENU
     function showContextMenu(e, key, msg, isMine) {
       selectedMsgKey = key;
       selectedMsgData = msg;
