@@ -107,7 +107,7 @@
       background: var(--bg-card); 
       padding: 0.8rem 1rem; 
       border-radius: 8px; 
-      margin-bottom: 1rem; 
+      margin-bottom: 0.5rem; 
       display: flex; 
       justify-content: space-between; 
       align-items: center; 
@@ -146,6 +146,43 @@
       width: 28px;
       height: 28px;
       border-width: 1px;
+    }
+
+    /* Stories Bar */
+    .stories-container {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 8px 0;
+      margin-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border-color);
+      -webkit-overflow-scrolling: touch;
+    }
+    .story-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      width: 50px;
+      flex-shrink: 0;
+    }
+    .story-avatar-wrapper {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      padding: 2px;
+      border: 2px solid var(--accent);
+    }
+    .story-avatar-wrapper.add-story {
+      border: 2px dashed var(--text-sub);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+      color: var(--accent);
     }
 
     .users-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -244,11 +281,14 @@
     .back-btn { background: none; border: none; color: var(--accent); font-size: 1.3rem; cursor: pointer; display: block; padding: 0 5px; touch-action: manipulation; }
     @media (min-width: 768px) { .back-btn { display: none; } }
 
-    .target-title { font-size: 0.95rem; font-weight: bold; color: var(--text-main); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
+    .target-title { font-size: 0.95rem; font-weight: bold; color: var(--text-main); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-    .header-right-group { display: flex; align-items: center; gap: 12px; }
+    .header-right-group { display: flex; align-items: center; gap: 8px; }
     .online-badge { font-size: 0.75rem; color: #22c55e; white-space: nowrap; }
     .online-badge.offline { color: var(--text-sub); }
+
+    .call-btn { background: none; border: none; color: var(--accent); font-size: 1.2rem; cursor: pointer; padding: 4px 6px; border-radius: 4px; touch-action: manipulation; }
+    .call-btn:hover { background: var(--border-color); }
 
     .chat-menu-btn { background: none; border: none; color: var(--text-sub); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; touch-action: manipulation; }
     .chat-menu-btn:hover { color: var(--text-main); background: var(--border-color); }
@@ -458,6 +498,56 @@
     .action-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .action-icon-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
 
+    /* Story View Modal Styling */
+    .story-viewer-card {
+      position: relative;
+      background: #000;
+      width: 100%;
+      max-width: 420px;
+      height: 80vh;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .story-viewer-header {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .story-viewer-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    .story-viewer-media {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Group Checkbox Item Styling */
+    .member-select-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
     /* Emoji Picker Container */
     .emoji-picker-popover {
       position: absolute;
@@ -654,6 +744,79 @@
       background: var(--bg-header);
     }
 
+    /* Call Modal Styling */
+    .call-modal-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      text-align: center;
+    }
+    .call-video-container {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .call-video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .call-video-container #local-video {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 80px;
+      height: 100px;
+      border-radius: 8px;
+      border: 2px solid var(--accent);
+    }
+
+    /* Passcode Lock Overlay */
+    #passcode-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100dvh;
+      background: var(--bg-body);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .passcode-inputs {
+      display: flex;
+      gap: 10px;
+    }
+    .passcode-inputs input {
+      width: 45px;
+      height: 50px;
+      text-align: center;
+      font-size: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    /* Media Gallery Modal */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .gallery-grid img, .gallery-grid video {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
     /* Mobile view responsive styling for sidebar & chat switching */
     @media (max-width: 767px) {
       #chat-app {
@@ -744,13 +907,27 @@
 </head>
 <body>
 
+  <!-- Passcode Lock Screen -->
+  <div id="passcode-overlay" class="hidden">
+    <h2 style="color: var(--accent);">🔒 Enter Passcode</h2>
+    <div class="passcode-inputs">
+      <input type="password" maxlength="1" class="pin-digit" autofocus />
+      <input type="password" maxlength="1" class="pin-digit" />
+      <input type="password" maxlength="1" class="pin-digit" />
+      <input type="password" maxlength="1" class="pin-digit" />
+    </div>
+    <p id="passcode-error" style="color: #ef4444; font-size: 0.85rem;" class="hidden">မှားယွင်းသော Passcode ဖြစ်ပါသည်!</p>
+  </div>
+
   <div id="chat-app">
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-top-bar">
         <span style="font-weight: bold; color: var(--accent);">CHAT APP</span>
-        <!-- Dark / Light Mode Switcher -->
-        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode">🌙</button>
+        <div>
+          <button class="theme-toggle-btn" id="create-group-btn" title="Create Group">➕👥</button>
+          <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode">🌙</button>
+        </div>
       </div>
 
       <!-- Clickable Profile Card -->
@@ -763,10 +940,19 @@
           </div>
         </div>
       </div>
+
+      <!-- Stories / Status Bar -->
+      <div class="stories-container" id="stories-bar">
+        <div class="story-item" id="add-story-btn">
+          <div class="story-avatar-wrapper add-story">+</div>
+          <span>Story တင်ပါ</span>
+        </div>
+        <!-- Stories will be rendered here dynamically -->
+      </div>
       
       <div class="users-list">
         <h3>
-          <span>GLOBAL ONLINE USERS</span>
+          <span>ONLINE USERS & GROUPS</span>
           <span id="user-count" style="color:var(--accent);">0</span>
         </h3>
         <div id="users-container"></div>
@@ -782,6 +968,13 @@
         </div>
         
         <div class="header-right-group">
+          <!-- Add Member Button for Groups -->
+          <button class="call-btn hidden" id="add-group-member-btn" title="Add User to Group">➕👤</button>
+
+          <!-- Voice & Video Call Buttons -->
+          <button class="call-btn hidden" id="voice-call-btn" title="Voice Call">📞</button>
+          <button class="call-btn hidden" id="video-call-btn" title="Video Call">📹</button>
+          
           <span class="online-badge" id="online-status-badge">● online</span>
           <button class="chat-menu-btn" id="chat-menu-btn" title="Options">☰</button>
         </div>
@@ -789,6 +982,7 @@
         <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
           <button id="menu-set-nickname">✏️ Set nickname</button>
           <button id="menu-change-bg">🎨 Change background</button>
+          <button id="menu-view-gallery">🖼️ Media Gallery</button>
           <!-- Block Button -->
           <button id="menu-block-user" style="color: #ef4444;">🚫 Block User</button>
         </div>
@@ -814,7 +1008,7 @@
         <form class="input-area" id="chat-form">
           <!-- File Attachments Input -->
           <button type="button" class="action-icon-btn" id="file-attach-btn" title="Send Image/File">📁</button>
-          <input type="file" id="file-input" class="hidden" accept="image/*,application/pdf,.doc,.docx,.zip" />
+          <input type="file" id="file-input" class="hidden" accept="image/*,video/*,application/pdf,.doc,.docx,.zip" />
 
           <!-- Emoji Picker Trigger Button -->
           <button type="button" class="action-icon-btn" id="emoji-btn" title="Insert Emoji">😊</button>
@@ -843,6 +1037,49 @@
     </div>
   </div>
 
+  <!-- Custom Confirm Modal (Story Delete) -->
+  <div id="custom-confirm-modal" class="modal-overlay hidden">
+    <div class="modal-card custom-alert-card">
+      <span class="alert-icon">🗑️</span>
+      <div id="confirm-title" class="alert-title">Story ဖျက်မည်</div>
+      <div id="confirm-message" class="alert-message">Story ကို ဖျက်ရန် သေချာပါသလား?</div>
+      <div class="modal-actions">
+        <button type="button" id="confirm-yes-btn" class="btn-primary" style="background:#ef4444;">ဖျက်မည်</button>
+        <button type="button" id="confirm-no-btn" class="cancel-btn">မဖျက်ပါ။</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group Members Info Modal -->
+  <div id="group-info-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 id="group-info-title">Group Members</h3>
+      <div id="group-members-list-view" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem;"></div>
+      <div class="modal-actions">
+        <button type="button" id="close-group-info-btn" class="cancel-btn">ပိတ်မည်</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Story View Modal -->
+  <div id="story-viewer-modal" class="modal-overlay hidden">
+    <div class="story-viewer-card">
+      <div class="story-viewer-header">
+        <div class="story-viewer-user">
+          <img id="story-user-avatar" class="avatar-img small" src="" />
+          <span id="story-user-name">User Name</span>
+        </div>
+        <div>
+          <button id="delete-story-btn" class="btn-small btn-delete hidden">🗑️</button>
+          <button id="close-story-btn" class="cancel-btn" style="padding: 2px 8px; background: none; color: white; font-size: 1.2rem;">✕</button>
+        </div>
+      </div>
+      <div id="story-media-container" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+        <!-- Photo/Video renders here -->
+      </div>
+    </div>
+  </div>
+
   <!-- Context Menu with Reaction Options -->
   <div id="context-menu" class="context-menu hidden">
     <div class="reaction-picker" id="reaction-picker">
@@ -854,8 +1091,73 @@
       <span data-emoji="🙏">🙏</span>
     </div>
     <button id="ctx-reply-btn">↩️ Reply</button>
+    <button id="ctx-forward-btn">↪️ Forward Message</button>
     <button id="ctx-edit-btn">✏️ Edit</button>
     <button id="ctx-delete-btn" class="danger">🗑️ Delete</button>
+  </div>
+
+  <!-- Voice / Video Call Modal -->
+  <div id="call-modal" class="modal-overlay hidden">
+    <div class="modal-card call-modal-card">
+      <h3 id="call-title">Voice Call...</h3>
+      <div class="call-video-container hidden" id="video-container">
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay playsinline muted></video>
+      </div>
+      <p id="call-status">Connecting WebRTC...</p>
+      <button type="button" id="end-call-btn" class="btn-primary" style="background:#ef4444; width:100%;">End Call</button>
+    </div>
+  </div>
+
+  <!-- Media Gallery Modal -->
+  <div id="gallery-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Media / File Gallery Preview</h3>
+      <div class="gallery-grid" id="gallery-grid"></div>
+      <div class="modal-actions">
+        <button type="button" id="close-gallery-btn" class="cancel-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forward Message Modal -->
+  <div id="forward-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Message Forward သွားမည့် User ရွေးပါ</h3>
+      <div id="forward-users-list" style="max-height: 200px; overflow-y: auto; margin-bottom: 1rem;"></div>
+      <div class="modal-actions">
+        <button type="button" id="close-forward-btn" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div id="group-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Create New Group Chat</h3>
+      <label>Group Name</label>
+      <input type="text" id="group-name-input" placeholder="Group Name ရိုက်ထည့်ပါ..." style="width:100%; padding:0.6rem; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-body); color:var(--text-main); margin-bottom: 1rem;" />
+      
+      <label>Group Member များ ရွေးရန်</label>
+      <div id="group-members-select-list" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px;"></div>
+
+      <div class="modal-actions">
+        <button type="button" id="save-group-btn" class="btn-primary">Create</button>
+        <button type="button" id="close-group-btn" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Member Modal for existing groups -->
+  <div id="add-member-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Add Members to Group</h3>
+      <div id="add-member-select-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; margin-bottom: 1rem;"></div>
+      <div class="modal-actions">
+        <button type="button" id="save-add-member-btn" class="btn-primary">Add Selected</button>
+        <button type="button" id="close-add-member-btn" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <!-- Profile Modal -->
@@ -876,6 +1178,9 @@
       <label>User Name</label>
       <input type="text" id="modal-username-input" placeholder="Username အသစ်..." required style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main);" />
       
+      <label style="margin-top:0.8rem;">Passcode Lock (PIN ၄ လုံး)</label>
+      <input type="password" maxlength="4" id="modal-passcode-input" placeholder="Passcode (optional)" style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main);" />
+
       <!-- Hide Online Status Toggle Switch -->
       <div class="toggle-group">
         <div>
@@ -941,6 +1246,9 @@
     </div>
   </div>
 
+  <!-- Story Upload Input -->
+  <input type="file" id="story-file-input" accept="image/*,video/*" class="hidden" />
+
   <!-- FIREBASE SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -970,11 +1278,13 @@
     let DEFAULT_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=" + myClientId;
     let currentUsername = localStorage.getItem('chatsphere_username_' + myClientId) || ('User_' + myClientId.substr(-4));
     let myProfilePic = localStorage.getItem('chatsphere_profile_pic_' + myClientId) || DEFAULT_AVATAR;
+    let savedPasscode = localStorage.getItem('chatsphere_passcode_' + myClientId) || '';
     let tempModalPic = "";
 
     let hideOnlineStatus = localStorage.getItem('chatsphere_hide_online') === 'true'; 
     let selectedTargetUser = null; 
     let activeChatRoomId = null;
+    let isGroupChat = false;
 
     let unreadCounts = {};
 
@@ -1006,6 +1316,7 @@
       }
     }
 
+    // PUSH NOTIFICATION SERVICE INITIALIZATION
     if ("Notification" in window && Notification.permission !== "granted") {
       Notification.requestPermission();
     }
@@ -1031,6 +1342,7 @@
     let pinnedUsers = getStoredObject('chatsphere_pinned_users');
     let blockedUsers = getStoredObject('chatsphere_blocked_users');
     let latestUsersList = [];
+    let groupList = [];
 
     let selectedMsgData = null;
     let selectedMsgKey = null;
@@ -1042,6 +1354,10 @@
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+
+    // WebRTC PeerConnection Variables
+    let peerConnection = null;
+    let localStream = null;
 
     // DOM Elements
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -1074,6 +1390,7 @@
     const contextMenu = document.getElementById('context-menu');
     const reactionPicker = document.getElementById('reaction-picker');
     const ctxReplyBtn = document.getElementById('ctx-reply-btn');
+    const ctxForwardBtn = document.getElementById('ctx-forward-btn');
     const ctxEditBtn = document.getElementById('ctx-edit-btn');
     const ctxDeleteBtn = document.getElementById('ctx-delete-btn');
 
@@ -1085,12 +1402,25 @@
     const alertOkBtn = document.getElementById('alert-ok-btn');
     const toastContainer = document.getElementById('toast-container');
 
+    // Custom Confirm Modal Elements
+    const customConfirmModal = document.getElementById('custom-confirm-modal');
+    const confirmYesBtn = document.getElementById('confirm-yes-btn');
+    const confirmNoBtn = document.getElementById('confirm-no-btn');
+    let confirmCallback = null;
+
+    // Group Info Modal Elements
+    const groupInfoModal = document.getElementById('group-info-modal');
+    const groupInfoTitle = document.getElementById('group-info-title');
+    const groupMembersListView = document.getElementById('group-members-list-view');
+    const closeGroupInfoBtn = document.getElementById('close-group-info-btn');
+
     // Modals DOM
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-btn');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const modalUsernameInput = document.getElementById('modal-username-input');
+    const modalPasscodeInput = document.getElementById('modal-passcode-input');
     const hideOnlineToggle = document.getElementById('hide-online-toggle');
     const modalAvatarPreview = document.getElementById('modal-avatar-preview');
     const profileFileInput = document.getElementById('profile-file-input');
@@ -1113,7 +1443,80 @@
     const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
     const menuSetNickname = document.getElementById('menu-set-nickname');
     const menuChangeBg = document.getElementById('menu-change-bg');
+    const menuViewGallery = document.getElementById('menu-view-gallery');
     const menuBlockUser = document.getElementById('menu-block-user');
+
+    // Voice & Video Call DOM
+    const voiceCallBtn = document.getElementById('voice-call-btn');
+    const videoCallBtn = document.getElementById('video-call-btn');
+    const callModal = document.getElementById('call-modal');
+    const callTitle = document.getElementById('call-title');
+    const callStatus = document.getElementById('call-status');
+    const videoContainer = document.getElementById('video-container');
+    const endCallBtn = document.getElementById('end-call-btn');
+
+    // Group DOM
+    const createGroupBtn = document.getElementById('create-group-btn');
+    const groupModal = document.getElementById('group-modal');
+    const groupNameInput = document.getElementById('group-name-input');
+    const groupMembersSelectList = document.getElementById('group-members-select-list');
+    const saveGroupBtn = document.getElementById('save-group-btn');
+    const closeGroupBtn = document.getElementById('close-group-btn');
+
+    const addGroupMemberBtn = document.getElementById('add-group-member-btn');
+    const addMemberModal = document.getElementById('add-member-modal');
+    const addMemberSelectList = document.getElementById('add-member-select-list');
+    const saveAddMemberBtn = document.getElementById('save-add-member-btn');
+    const closeAddMemberBtn = document.getElementById('close-add-member-btn');
+
+    // Story DOM
+    const storiesBar = document.getElementById('stories-bar');
+    const addStoryBtn = document.getElementById('add-story-btn');
+    const storyFileInput = document.getElementById('story-file-input');
+    const storyViewerModal = document.getElementById('story-viewer-modal');
+    const storyUserAvatar = document.getElementById('story-user-avatar');
+    const storyUserName = document.getElementById('story-user-name');
+    const storyMediaContainer = document.getElementById('story-media-container');
+    const deleteStoryBtn = document.getElementById('delete-story-btn');
+    const closeStoryBtn = document.getElementById('close-story-btn');
+
+    // Gallery DOM
+    const galleryModal = document.getElementById('gallery-modal');
+    const galleryGrid = document.getElementById('gallery-grid');
+    const closeGalleryBtn = document.getElementById('close-gallery-btn');
+
+    // Forward DOM
+    const forwardModal = document.getElementById('forward-modal');
+    const forwardUsersList = document.getElementById('forward-users-list');
+    const closeForwardBtn = document.getElementById('close-forward-btn');
+
+    // Passcode Overlay DOM
+    const passcodeOverlay = document.getElementById('passcode-overlay');
+    const passcodeError = document.getElementById('passcode-error');
+
+    /* INITIALIZE PASSCODE LOCK SYSTEM */
+    if (savedPasscode) {
+      passcodeOverlay.classList.remove('hidden');
+      const pinInputs = document.querySelectorAll('.pin-digit');
+      pinInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          if (e.target.value.length === 1 && index < pinInputs.length - 1) {
+            pinInputs[index + 1].focus();
+          }
+          let enteredPin = Array.from(pinInputs).map(i => i.value).join('');
+          if (enteredPin.length === 4) {
+            if (enteredPin === savedPasscode) {
+              passcodeOverlay.classList.add('hidden');
+              passcodeError.classList.add('hidden');
+            } else {
+              passcodeError.classList.remove('hidden');
+              pinInputs.forEach(i => i.value = '');
+              pinInputs[0].focus();
+            }
+          }
+        });
+      });
+    }
 
     /* INITIALIZE APP UI DIRECTLY */
     displayMyUsername.textContent = currentUsername;
@@ -1121,6 +1524,8 @@
     chatArea.classList.remove('active-mobile');
     
     initGlobalPresence();
+    listenGroups();
+    listenStories();
     listenAllUnreadMessages();
 
     /* DARK / LIGHT THEME TOGGLE */
@@ -1168,6 +1573,52 @@
       customAlertModal.classList.add('hidden');
     });
 
+    /* Custom Stylish Confirm Modal */
+    function showCustomConfirm(title, message, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      confirmCallback = onConfirm;
+      customConfirmModal.classList.remove('hidden');
+    }
+
+    confirmYesBtn.addEventListener('click', () => {
+      if (confirmCallback) confirmCallback();
+      customConfirmModal.classList.add('hidden');
+    });
+
+    confirmNoBtn.addEventListener('click', () => {
+      customConfirmModal.classList.add('hidden');
+    });
+
+    /* Group Members List Viewer Function */
+    targetUsernameEl.addEventListener('click', () => {
+      if (!isGroupChat || !selectedTargetUser) return;
+
+      groupInfoTitle.textContent = `${selectedTargetUser.name} (${Object.keys(selectedTargetUser.members || {}).length} Members)`;
+      groupMembersListView.innerHTML = '';
+
+      const membersMap = selectedTargetUser.members || {};
+      
+      db.ref('global_online_users').get().then(snapshot => {
+        const allUsers = snapshot.val() || {};
+        
+        Object.keys(membersMap).forEach(mId => {
+          const uInfo = allUsers[mId] || { name: (mId === myClientId ? currentUsername : 'User'), profilePic: DEFAULT_AVATAR };
+          const item = document.createElement('div');
+          item.style.cssText = 'display: flex; align-items: center; gap: 10px; background: var(--bg-header); padding: 8px 12px; border-radius: 8px;';
+          item.innerHTML = `
+            <img class="avatar-img small" src="${uInfo.profilePic || DEFAULT_AVATAR}" />
+            <span style="font-weight: 600; font-size: 0.9rem;">${escapeHTML(uInfo.name)} ${mId === myClientId ? '(You)' : ''}</span>
+          `;
+          groupMembersListView.appendChild(item);
+        });
+
+        groupInfoModal.classList.remove('hidden');
+      });
+    });
+
+    closeGroupInfoBtn.addEventListener('click', () => groupInfoModal.classList.add('hidden'));
+
     /* Toast Notification Helper */
     function showToast(text, type = 'info') {
       const toast = document.createElement('div');
@@ -1206,16 +1657,19 @@
     chatMenuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       chatDropdownMenu.classList.toggle('hidden');
-      if (selectedTargetUser) {
+      if (selectedTargetUser && !isGroupChat) {
         const isBlocked = !!blockedUsers[selectedTargetUser.id];
         menuBlockUser.textContent = isBlocked ? "✅ Unblock User" : "🚫 Block User";
+        menuBlockUser.classList.remove('hidden');
+      } else {
+        menuBlockUser.classList.add('hidden');
       }
     });
 
     // Block & Unblock User Logic
     menuBlockUser.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
-      if (!selectedTargetUser) return;
+      if (!selectedTargetUser || isGroupChat) return;
 
       const targetId = selectedTargetUser.id;
       const targetName = nicknames[targetId] || selectedTargetUser.name;
@@ -1235,7 +1689,7 @@
     function updateInputAreaState() {
       if (!selectedTargetUser) return;
 
-      const isBlockedByMe = !!blockedUsers[selectedTargetUser.id];
+      const isBlockedByMe = !isGroupChat && !!blockedUsers[selectedTargetUser.id];
 
       if (isBlockedByMe) {
         messageInput.disabled = true;
@@ -1258,8 +1712,8 @@
     // Custom Nickname Modal Logic
     menuSetNickname.addEventListener('click', () => {
       chatDropdownMenu.classList.add('hidden');
-      if (!selectedTargetUser) {
-        showCustomAlert("သတိပေးချက်", "ကျေးဇူးပြု၍ User တစ်ယောက်ကို အရင် ရွေးချယ်ပါ!", "⚠️");
+      if (!selectedTargetUser || isGroupChat) {
+        showCustomAlert("သတိပေးချက်", "ကျေးဇူးပြု၍ Direct Chat ရွေးချယ်ပါ!", "⚠️");
         return;
       }
       nicknameModalTitle.textContent = `"${selectedTargetUser.name}" အတွက် Nickname သတ်မှတ်ပါ`;
@@ -1284,6 +1738,33 @@
       renderUsersUI();
       nicknameModal.classList.add('hidden');
     });
+
+    // MEDIA GALLERY PREVIEW
+    menuViewGallery.addEventListener('click', () => {
+      chatDropdownMenu.classList.add('hidden');
+      if (!activeChatRoomId) return;
+
+      galleryGrid.innerHTML = '';
+      db.ref(`direct_messages/${activeChatRoomId}`).get().then(snapshot => {
+        const msgs = snapshot.val() || {};
+        Object.values(msgs).forEach(msg => {
+          if (msg.type === 'image') {
+            const img = document.createElement('img');
+            img.src = msg.fileData;
+            img.onclick = () => window.open(msg.fileData);
+            galleryGrid.appendChild(img);
+          } else if (msg.type === 'video') {
+            const vid = document.createElement('video');
+            vid.src = msg.fileData;
+            vid.controls = true;
+            galleryGrid.appendChild(vid);
+          }
+        });
+        galleryModal.classList.remove('hidden');
+      });
+    });
+
+    closeGalleryBtn.addEventListener('click', () => galleryModal.classList.add('hidden'));
 
     // Custom Background Customizer Modal Logic
     menuChangeBg.addEventListener('click', () => {
@@ -1338,6 +1819,199 @@
       if (!chatDropdownMenu.contains(e.target) && e.target !== chatMenuBtn) {
         chatDropdownMenu.classList.add('hidden');
       }
+    });
+
+    // GROUP CHAT SYSTEM
+    createGroupBtn.addEventListener('click', () => {
+      groupMembersSelectList.innerHTML = '';
+      latestUsersList.forEach(usr => {
+        if (usr.id !== myClientId) {
+          const item = document.createElement('div');
+          item.className = 'member-select-item';
+          item.innerHTML = `
+            <span>${escapeHTML(usr.name)}</span>
+            <input type="checkbox" value="${usr.id}" class="group-member-checkbox" />
+          `;
+          groupMembersSelectList.appendChild(item);
+        }
+      });
+      groupModal.classList.remove('hidden');
+    });
+
+    closeGroupBtn.addEventListener('click', () => groupModal.classList.add('hidden'));
+
+    saveGroupBtn.addEventListener('click', () => {
+      const name = groupNameInput.value.trim();
+      if (!name) return;
+      
+      const groupId = 'group_' + Date.now();
+      const members = { [myClientId]: true };
+
+      document.querySelectorAll('.group-member-checkbox:checked').forEach(cb => {
+        members[cb.value] = true;
+      });
+
+      db.ref(`groups/${groupId}`).set({
+        id: groupId,
+        name: name,
+        createdBtn: myClientId,
+        members: members
+      });
+
+      groupNameInput.value = '';
+      groupModal.classList.add('hidden');
+      showToast('👥 Group အသစ် တည်ဆောက်ပြီးပါပြီ!');
+    });
+
+    // Add Member to Existing Group Logic
+    addGroupMemberBtn.addEventListener('click', () => {
+      if (!isGroupChat || !selectedTargetUser) return;
+
+      addMemberSelectList.innerHTML = '';
+      const currentMembers = selectedTargetUser.members || {};
+
+      latestUsersList.forEach(usr => {
+        if (usr.id !== myClientId && !currentMembers[usr.id]) {
+          const item = document.createElement('div');
+          item.className = 'member-select-item';
+          item.innerHTML = `
+            <span>${escapeHTML(usr.name)}</span>
+            <input type="checkbox" value="${usr.id}" class="add-member-checkbox" />
+          `;
+          addMemberSelectList.appendChild(item);
+        }
+      });
+
+      addMemberModal.classList.remove('hidden');
+    });
+
+    closeAddMemberBtn.addEventListener('click', () => addMemberModal.classList.add('hidden'));
+
+    saveAddMemberBtn.addEventListener('click', () => {
+      if (!isGroupChat || !selectedTargetUser) return;
+
+      const newMembers = {};
+      document.querySelectorAll('.add-member-checkbox:checked').forEach(cb => {
+        newMembers[cb.value] = true;
+      });
+
+      if (Object.keys(newMembers).length > 0) {
+        db.ref(`groups/${selectedTargetUser.id}/members`).update(newMembers);
+        showToast('👤 Member များ ထည့်သွင်းပြီးပါပြီ!');
+      }
+
+      addMemberModal.classList.add('hidden');
+    });
+
+    function listenGroups() {
+      db.ref('groups').on('value', snapshot => {
+        const groupsObj = snapshot.val() || {};
+        // Filter groups where current user is a member
+        groupList = Object.values(groupsObj).filter(g => g.members && g.members[myClientId]);
+        renderUsersUI();
+      });
+    }
+
+    // STORY / STATUS FEATURE WITH BOTH PHOTO AND VIDEO SUPPORT
+    addStoryBtn.addEventListener('click', () => storyFileInput.click());
+
+    storyFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 15 * 1024 * 1024) {
+        showCustomAlert("File Size Error", "Story Photo/Video သည် 15MB ထက် မကျော်ရပါ!", "📹");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const storyId = 'story_' + Date.now();
+        const isVideo = file.type.startsWith('video/');
+
+        db.ref(`stories/${storyId}`).set({
+          id: storyId,
+          userId: myClientId,
+          userName: currentUsername,
+          userPic: myProfilePic,
+          media: evt.target.result,
+          mediaType: isVideo ? 'video' : 'photo',
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        showToast('✨ Story တင်ပြီးပါပြီ!');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function listenStories() {
+      db.ref('stories').on('value', snapshot => {
+        const stories = snapshot.val() || {};
+        const now = Date.now();
+        const EXPIRY = 24 * 60 * 60 * 1000; // 24 Hours
+
+        storiesBar.innerHTML = `
+          <div class="story-item" id="add-story-btn-inner">
+            <div class="story-avatar-wrapper add-story">+</div>
+            <span>Story တင်ပါ</span>
+          </div>
+        `;
+        document.getElementById('add-story-btn-inner').onclick = () => storyFileInput.click();
+
+        Object.values(stories).forEach(st => {
+          if (now - st.timestamp < EXPIRY) {
+            const stItem = document.createElement('div');
+            stItem.className = 'story-item';
+            stItem.innerHTML = `
+              <div class="story-avatar-wrapper">
+                <img class="avatar-img" style="width:100%; height:100%; border:none;" src="${st.userPic || DEFAULT_AVATAR}" />
+              </div>
+              <span>${escapeHTML(st.userName)}</span>
+            `;
+            stItem.onclick = () => viewStory(st);
+            storiesBar.appendChild(stItem);
+          }
+        });
+      });
+    }
+
+    function viewStory(story) {
+      storyUserAvatar.src = story.userPic || DEFAULT_AVATAR;
+      storyUserName.textContent = story.userName;
+      storyMediaContainer.innerHTML = '';
+
+      if (story.mediaType === 'video') {
+        const video = document.createElement('video');
+        video.src = story.media;
+        video.className = 'story-viewer-media';
+        video.autoplay = true;
+        video.controls = true;
+        storyMediaContainer.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = story.media;
+        img.className = 'story-viewer-media';
+        storyMediaContainer.appendChild(img);
+      }
+
+      if (story.userId === myClientId) {
+        deleteStoryBtn.classList.remove('hidden');
+        deleteStoryBtn.onclick = () => {
+          showCustomConfirm("Story ဖျက်မည်", "ဤ Story ကို ဖျက်ရန် သေချာပါသလား?", () => {
+            db.ref(`stories/${story.id}`).remove();
+            storyViewerModal.classList.add('hidden');
+            showToast('🗑️ Story ဖျက်ပြီးပါပြီ');
+          });
+        };
+      } else {
+        deleteStoryBtn.classList.add('hidden');
+      }
+
+      storyViewerModal.classList.remove('hidden');
+    }
+
+    closeStoryBtn.addEventListener('click', () => {
+      storyViewerModal.classList.add('hidden');
+      storyMediaContainer.innerHTML = '';
     });
 
     // PRESENCE SYSTEM
@@ -1416,6 +2090,25 @@
       const GRACE_PERIOD_MS = 5 * 60 * 1000; 
       const now = Date.now();
 
+      // Render Groups First
+      groupList.forEach(grp => {
+        visibleCount++;
+        const memberCount = Object.keys(grp.members || {}).length;
+        const userEl = document.createElement('div');
+        userEl.className = `user-item ${selectedTargetUser && selectedTargetUser.id === grp.id ? 'active' : ''}`;
+        userEl.innerHTML = `
+          <div class="user-info-group">
+            <span style="font-size:1.2rem;">👥</span>
+            <div>
+              <span class="user-name">${escapeHTML(grp.name)}</span>
+              <div style="font-size:0.75rem; color:var(--text-sub);">${memberCount} members</div>
+            </div>
+          </div>
+        `;
+        userEl.addEventListener('click', () => selectGroupToChat(grp));
+        usersContainer.appendChild(userEl);
+      });
+
       const validUsers = latestUsersList.filter(user => {
         if (user.id === myClientId) return false; 
 
@@ -1485,13 +2178,13 @@
       });
 
       userCountEl.textContent = visibleCount;
-      if (selectedTargetUser) {
+      if (selectedTargetUser && !isGroupChat) {
         updateHeaderOnlineStatus();
       }
     }
 
     function updateHeaderOnlineStatus() {
-      if (!selectedTargetUser) return;
+      if (!selectedTargetUser || isGroupChat) return;
 
       const liveUser = latestUsersList.find(u => u.id === selectedTargetUser.id);
       const now = Date.now();
@@ -1517,12 +2210,18 @@
     }
 
     function selectUserToChat(targetUser) {
+      isGroupChat = false;
       selectedTargetUser = targetUser;
       const displayName = nicknames[targetUser.id] || targetUser.name;
       const targetPic = targetUser.profilePic || DEFAULT_AVATAR;
 
       targetUsernameEl.innerHTML = `<img class="avatar-img small" src="${targetPic}"/> 💬 ${escapeHTML(displayName)} နှင့် စာပို့နေပါသည်`;
       
+      addGroupMemberBtn.classList.add('hidden');
+      voiceCallBtn.classList.remove('hidden');
+      videoCallBtn.classList.remove('hidden');
+      onlineStatusBadge.classList.remove('hidden');
+
       updateHeaderOnlineStatus();
       activeChatRoomId = [myClientId, targetUser.id].sort().join('_direct_');
 
@@ -1537,10 +2236,73 @@
       listenTypingStatus();
     }
 
+    function selectGroupToChat(grp) {
+      isGroupChat = true;
+      selectedTargetUser = grp;
+
+      const memberCount = Object.keys(grp.members || {}).length;
+      targetUsernameEl.innerHTML = `👥 💬 <span>${escapeHTML(grp.name)} (${memberCount} Members)</span>`;
+      
+      addGroupMemberBtn.classList.remove('hidden');
+      voiceCallBtn.classList.add('hidden');
+      videoCallBtn.classList.add('hidden');
+      onlineStatusBadge.classList.add('hidden');
+
+      activeChatRoomId = grp.id;
+
+      noChatMsg.classList.add('hidden');
+      inputWrapper.classList.remove('hidden');
+      chatArea.classList.add('active-mobile');
+
+      updateInputAreaState();
+
+      document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+      listenDirectMessages();
+    }
+
+    // VOICE & VIDEO CALL WEBRTC SYSTEM
+    voiceCallBtn.addEventListener('click', () => startCall(false));
+    videoCallBtn.addEventListener('click', () => startCall(true));
+
+    async function startCall(isVideo) {
+      if (!selectedTargetUser || isGroupChat) return;
+      callModal.classList.remove('hidden');
+      callTitle.textContent = isVideo ? "Video Calling..." : "Voice Calling...";
+      
+      if (isVideo) videoContainer.classList.remove('hidden');
+      else videoContainer.classList.add('hidden');
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+        if (isVideo) document.getElementById('local-video').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection();
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = (event) => {
+          document.getElementById('remote-video').srcObject = event.streams[0];
+        };
+
+        callStatus.textContent = "Ringing...";
+      } catch (err) {
+        showCustomAlert("Error", "Media Access Denied", "🎙️");
+        endCall();
+      }
+    }
+
+    endCallBtn.addEventListener('click', endCall);
+
+    function endCall() {
+      if (localStream) localStream.getTracks().forEach(track => track.stop());
+      if (peerConnection) peerConnection.close();
+      callModal.classList.add('hidden');
+    }
+
     // IN-CHAT TYPING INDICATOR REALTIME LISTENER
     function listenTypingStatus() {
       if (typingRef) typingRef.off();
-      
+      if (isGroupChat) return;
+
       typingRef = db.ref(`typing_status/${activeChatRoomId}/${selectedTargetUser.id}`);
       typingRef.on('value', (snapshot) => {
         let typingEl = document.getElementById('in-chat-typing-indicator');
@@ -1564,7 +2326,7 @@
 
     // TYPING INPUT EVENT
     messageInput.addEventListener('input', () => {
-      if (!activeChatRoomId || (selectedTargetUser && blockedUsers[selectedTargetUser.id])) return;
+      if (!activeChatRoomId || (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id])) return;
 
       db.ref(`typing_status/${activeChatRoomId}/${myClientId}`).set(true);
 
@@ -1589,7 +2351,7 @@
         const key = snapshot.key;
         const msg = snapshot.val();
 
-        if (blockedUsers[msg.senderId]) {
+        if (!isGroupChat && blockedUsers[msg.senderId]) {
           return;
         }
 
@@ -1615,7 +2377,7 @@
       messagesRef.on('child_changed', (snapshot) => {
         const key = snapshot.key;
         const msg = snapshot.val();
-        if (blockedUsers[msg.senderId]) return;
+        if (!isGroupChat && blockedUsers[msg.senderId]) return;
 
         const existingEl = document.getElementById(`msg-${key}`);
         if (existingEl) {
@@ -1667,6 +2429,8 @@
       let mediaContent = '';
       if (msg.type === 'image') {
         mediaContent = `<img src="${msg.fileData}" class="msg-image" onclick="window.open('${msg.fileData}')" />`;
+      } else if (msg.type === 'video') {
+        mediaContent = `<video src="${msg.fileData}" controls style="max-width:100%; border-radius:8px; margin-top:5px;"></video>`;
       } else if (msg.type === 'file') {
         mediaContent = `<a href="${msg.fileData}" download="${msg.fileName || 'file'}" class="msg-file-link">📎 ${escapeHTML(msg.fileName || 'Download File')}</a>`;
       } else if (msg.type === 'audio') {
@@ -1800,7 +2564,7 @@
 
     ctxReplyBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
-      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+      if (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
         showCustomAlert("သတိပေးချက်", "Block ထားသောကြောင့် စာပြန်၍မရပါ။", "🚫");
         return;
       }
@@ -1815,6 +2579,39 @@
       messageInput.focus();
     });
 
+    // MESSAGE FORWARDING LOGIC
+    ctxForwardBtn.addEventListener('click', () => {
+      contextMenu.classList.add('hidden');
+      forwardUsersList.innerHTML = '';
+
+      latestUsersList.forEach(usr => {
+        if (usr.id !== myClientId) {
+          const btn = document.createElement('button');
+          btn.className = 'btn-primary';
+          btn.style.width = '100%';
+          btn.style.marginBottom = '6px';
+          btn.textContent = usr.name;
+          btn.onclick = () => {
+            const targetRoomId = [myClientId, usr.id].sort().join('_direct_');
+            db.ref(`direct_messages/${targetRoomId}`).push({
+              ...selectedMsgData,
+              senderId: myClientId,
+              senderName: currentUsername,
+              senderPic: myProfilePic,
+              timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            forwardModal.classList.add('hidden');
+            showToast('↪️ Forward ပို့ပြီးပါပြီ!');
+          };
+          forwardUsersList.appendChild(btn);
+        }
+      });
+
+      forwardModal.classList.remove('hidden');
+    });
+
+    closeForwardBtn.addEventListener('click', () => forwardModal.classList.add('hidden'));
+
     cancelReplyBtn.addEventListener('click', () => {
       activeReplyData = null;
       replyPreviewBar.classList.add('hidden');
@@ -1822,7 +2619,7 @@
 
     ctxEditBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
-      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+      if (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
         showCustomAlert("သတိပေးချက်", "Block ထားသောကြောင့် ပြင်ဆင်၍မရပါ။", "🚫");
         return;
       }
@@ -1838,16 +2635,16 @@
 
     ctxDeleteBtn.addEventListener('click', () => {
       contextMenu.classList.add('hidden');
-      if (confirm("ဤ စာကြောင်းကို Permanent ဖျက်ပစ်ရန် သေချာပါသလား?")) {
+      showCustomConfirm("စာတို ဖျက်မည်", "ဤ စာကြောင်းကို Permanent ဖျက်ပစ်ရန် သေချာပါသလား?", () => {
         db.ref(`direct_messages/${activeChatRoomId}/${selectedMsgKey}`).remove();
-      }
+      });
     });
 
     // SEND TEXT MESSAGE
     chatForm.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+      if (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
         showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် စာပို့၍မရပါ။", "🚫");
         return;
       }
@@ -1879,7 +2676,7 @@
 
     // IMAGE & FILE SHARING HANDLER
     fileAttachBtn.addEventListener('click', () => {
-      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+      if (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
         showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။", "🚫");
         return;
       }
@@ -1890,13 +2687,13 @@
       const file = e.target.files[0];
       if (!file || !activeChatRoomId) return;
 
-      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+      if (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
         showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် ဖိုင် ပို့၍မရပါ။", "🚫");
         return;
       }
 
-      if (file.size > 2 * 1024 * 1024) {
-        showCustomAlert("File Size Error", "ဖိုင် ပမာဏသည် 2MB ထက် မကျော်လွန်ရပါ!", "📁");
+      if (file.size > 5 * 1024 * 1024) {
+        showCustomAlert("File Size Error", "ဖိုင် ပမာဏသည် 5MB ထက် မကျော်လွန်ရပါ!", "📁");
         return;
       }
 
@@ -1904,12 +2701,13 @@
       reader.onload = function(evt) {
         const base64Data = evt.target.result;
         const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
 
         const messageData = {
           senderId: myClientId,
           senderName: currentUsername,
           senderPic: myProfilePic,
-          type: isImage ? 'image' : 'file',
+          type: isImage ? 'image' : (isVideo ? 'video' : 'file'),
           fileData: base64Data,
           fileName: file.name,
           timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -1931,7 +2729,7 @@
     micBtn.addEventListener('click', async () => {
       if (!activeChatRoomId) return;
 
-      if (selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
+      if (!isGroupChat && selectedTargetUser && blockedUsers[selectedTargetUser.id]) {
         showCustomAlert("သတိပေးချက်", "ဤ User ကို Block ထားသောကြောင့် Voice Message ပို့၍မရပါ။", "🚫");
         return;
       }
@@ -1987,6 +2785,7 @@
     // PROFILE MODAL & CONTROLS
     openProfileBtn.addEventListener('click', () => {
       modalUsernameInput.value = currentUsername;
+      modalPasscodeInput.value = savedPasscode;
       hideOnlineToggle.checked = hideOnlineStatus;
       tempModalPic = myProfilePic;
       modalAvatarPreview.src = tempModalPic;
@@ -2024,9 +2823,11 @@
 
       currentUsername = newUsername;
       myProfilePic = tempModalPic;
+      savedPasscode = modalPasscodeInput.value.trim();
 
       localStorage.setItem('chatsphere_username_' + myClientId, currentUsername);
       localStorage.setItem('chatsphere_profile_pic_' + myClientId, myProfilePic);
+      localStorage.setItem('chatsphere_passcode_' + myClientId, savedPasscode);
 
       displayMyUsername.textContent = currentUsername;
       myProfileImg.src = myProfilePic;
